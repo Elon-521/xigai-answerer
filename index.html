@@ -1,0 +1,8079 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>习概逐题答题器</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f6f7f4;
+        --panel: #ffffff;
+        --ink: #1f2528;
+        --muted: #687178;
+        --line: #d9ddd8;
+        --soft: #eef7f4;
+        --soft-amber: #fff6e8;
+        --accent: #168a83;
+        --accent-dark: #0f6762;
+        --amber: #d97706;
+        --good: #16803b;
+        --bad: #c2410c;
+        --shadow: 0 18px 40px rgba(31, 37, 40, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          linear-gradient(180deg, rgba(22, 138, 131, 0.07), rgba(255, 255, 255, 0) 280px),
+          var(--bg);
+        color: var(--ink);
+        font-family:
+          "Microsoft YaHei",
+          "PingFang SC",
+          "Noto Sans CJK SC",
+          system-ui,
+          sans-serif;
+        letter-spacing: 0;
+      }
+
+      button,
+      select,
+      input {
+        font: inherit;
+      }
+
+      button {
+        cursor: pointer;
+      }
+
+      .app {
+        width: min(1440px, 100%);
+        margin: 0 auto;
+        padding: 18px;
+      }
+
+      .topbar {
+        display: grid;
+        grid-template-columns: minmax(220px, 1fr) auto;
+        gap: 16px;
+        align-items: center;
+        min-height: 58px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      .brand-mark {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        border: 1px solid rgba(22, 138, 131, 0.35);
+        border-radius: 8px;
+        background: var(--soft);
+        color: var(--accent-dark);
+        font-weight: 800;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(22px, 3vw, 30px);
+        line-height: 1.15;
+        font-weight: 800;
+      }
+
+      .meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+        gap: 8px;
+      }
+
+      .pill {
+        min-height: 34px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.72);
+        color: var(--muted);
+        white-space: nowrap;
+      }
+
+      .pill strong {
+        color: var(--ink);
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 320px minmax(0, 1fr) 280px;
+        gap: 16px;
+        margin-top: 18px;
+        align-items: start;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+      }
+
+      .side {
+        position: sticky;
+        top: 16px;
+        padding: 16px;
+      }
+
+      .group {
+        display: grid;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+
+      .label {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      select,
+      input[type="search"] {
+        width: 100%;
+        min-height: 42px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #fff;
+        color: var(--ink);
+        padding: 0 10px;
+        outline: none;
+      }
+
+      select:focus,
+      input[type="search"]:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(22, 138, 131, 0.14);
+      }
+
+      .segmented {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+      }
+
+      .segmented button,
+      .tool-button,
+      .primary,
+      .ghost {
+        min-height: 42px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #fff;
+        color: var(--ink);
+        padding: 0 12px;
+        transition:
+          background 0.18s ease,
+          border-color 0.18s ease,
+          color 0.18s ease,
+          transform 0.18s ease;
+      }
+
+      .segmented button.active {
+        border-color: rgba(22, 138, 131, 0.55);
+        background: var(--soft);
+        color: var(--accent-dark);
+        font-weight: 800;
+      }
+
+      .tool-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .tool-button:hover,
+      .ghost:hover,
+      .segmented button:hover {
+        border-color: var(--accent);
+        transform: translateY(-1px);
+      }
+
+      .primary {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: #fff;
+        font-weight: 800;
+      }
+
+      .primary:hover {
+        background: var(--accent-dark);
+      }
+
+      .question-panel {
+        padding: 20px;
+        min-height: calc(100vh - 112px);
+        display: grid;
+        grid-template-rows: auto auto 1fr auto;
+        gap: 16px;
+      }
+
+      .progress-shell {
+        height: 10px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #e8ebe7;
+      }
+
+      .progress-bar {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, var(--accent), #e0a025);
+        transition: width 0.24s ease;
+      }
+
+      .question-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        align-items: start;
+      }
+
+      .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        padding: 4px 9px;
+        border-radius: 999px;
+        background: var(--soft);
+        color: var(--accent-dark);
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .tag.alt {
+        background: var(--soft-amber);
+        color: #9a4f00;
+      }
+
+      .counter {
+        color: var(--muted);
+        font-weight: 800;
+        white-space: nowrap;
+      }
+
+      .prompt {
+        margin: 6px 0 0;
+        font-size: clamp(20px, 2.2vw, 28px);
+        line-height: 1.55;
+        font-weight: 800;
+        overflow-wrap: anywhere;
+      }
+
+      .options {
+        display: grid;
+        align-content: start;
+        gap: 10px;
+      }
+
+      .option {
+        width: 100%;
+        min-height: 58px;
+        display: grid;
+        grid-template-columns: 42px minmax(0, 1fr);
+        gap: 12px;
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        color: var(--ink);
+        padding: 10px 12px;
+        text-align: left;
+      }
+
+      .option:hover {
+        border-color: var(--accent);
+        background: #fbfefd;
+      }
+
+      .option.selected {
+        border-color: var(--accent);
+        background: var(--soft);
+      }
+
+      .option.correct {
+        border-color: rgba(22, 128, 59, 0.55);
+        background: #effaf2;
+      }
+
+      .option.wrong {
+        border-color: rgba(194, 65, 12, 0.5);
+        background: #fff2eb;
+      }
+
+      .option-key {
+        width: 34px;
+        height: 34px;
+        display: grid;
+        place-items: center;
+        border-radius: 999px;
+        border: 1px solid currentColor;
+        color: var(--accent-dark);
+        font-weight: 900;
+      }
+
+      .option-text {
+        line-height: 1.55;
+        overflow-wrap: anywhere;
+      }
+
+      .feedback {
+        min-height: 58px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fbfbfa;
+        padding: 12px;
+        display: none;
+        line-height: 1.55;
+      }
+
+      .feedback.show {
+        display: block;
+      }
+
+      .feedback.good {
+        border-color: rgba(22, 128, 59, 0.35);
+        background: #effaf2;
+      }
+
+      .feedback.bad {
+        border-color: rgba(194, 65, 12, 0.35);
+        background: #fff2eb;
+      }
+
+      .feedback strong.good {
+        color: var(--good);
+      }
+
+      .feedback strong.bad {
+        color: var(--bad);
+      }
+
+      .actions {
+        display: grid;
+        grid-template-columns: 1fr 1.2fr 1fr;
+        gap: 10px;
+      }
+
+      .summary {
+        position: sticky;
+        top: 16px;
+        padding: 16px;
+        display: grid;
+        gap: 14px;
+      }
+
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .stat {
+        min-height: 74px;
+        padding: 10px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fbfbfa;
+      }
+
+      .stat .num {
+        display: block;
+        font-size: 24px;
+        line-height: 1;
+        font-weight: 900;
+      }
+
+      .stat .name {
+        display: block;
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .nav-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px;
+        max-height: 380px;
+        overflow: auto;
+        padding-right: 2px;
+      }
+
+      .nav-dot {
+        aspect-ratio: 1;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        background: #fff;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .nav-dot.current {
+        border-color: var(--accent);
+        background: var(--soft);
+        color: var(--accent-dark);
+      }
+
+      .nav-dot.done {
+        color: var(--good);
+        border-color: rgba(22, 128, 59, 0.35);
+      }
+
+      .nav-dot.missed {
+        color: var(--bad);
+        border-color: rgba(194, 65, 12, 0.35);
+        background: #fff7f2;
+      }
+
+      .empty {
+        display: none;
+        min-height: 320px;
+        place-items: center;
+        padding: 24px;
+        color: var(--muted);
+        text-align: center;
+        line-height: 1.7;
+      }
+
+      .empty.show {
+        display: grid;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      @media (max-width: 1120px) {
+        .layout {
+          grid-template-columns: 280px minmax(0, 1fr);
+        }
+
+        .summary {
+          grid-column: 1 / -1;
+          position: static;
+        }
+
+        .nav-grid {
+          grid-template-columns: repeat(10, minmax(34px, 1fr));
+          max-height: 190px;
+        }
+      }
+
+      @media (max-width: 760px) {
+        .app {
+          padding: 12px;
+        }
+
+        .topbar {
+          grid-template-columns: 1fr;
+        }
+
+        .meta-row {
+          justify-content: flex-start;
+        }
+
+        .layout {
+          grid-template-columns: 1fr;
+        }
+
+        .side,
+        .summary {
+          position: static;
+        }
+
+        .question-panel {
+          min-height: auto;
+          padding: 16px;
+        }
+
+        .question-head {
+          grid-template-columns: 1fr;
+        }
+
+        .counter {
+          white-space: normal;
+        }
+
+        .actions {
+          grid-template-columns: 1fr;
+        }
+
+        .tool-row {
+          grid-template-columns: 1fr;
+        }
+
+        .nav-grid {
+          grid-template-columns: repeat(6, 1fr);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <header class="topbar">
+        <div class="brand">
+          <div class="brand-mark">习</div>
+          <h1>习概逐题答题器</h1>
+        </div>
+        <div class="meta-row" aria-label="题库概览">
+          <span class="pill">题库 <strong id="totalCount">0</strong></span>
+          <span class="pill">当前 <strong id="activeCount">0</strong></span>
+          <span class="pill">正确率 <strong id="rateTop">0%</strong></span>
+        </div>
+      </header>
+
+      <section class="layout">
+        <aside class="panel side">
+          <div class="group">
+            <label class="label" for="chapterSelect">章节</label>
+            <select id="chapterSelect"></select>
+          </div>
+
+          <div class="group">
+            <div class="label">题型</div>
+            <div class="segmented" id="typeTabs">
+              <button type="button" data-type="all" class="active">全部</button>
+              <button type="button" data-type="single">单选</button>
+              <button type="button" data-type="multiple">多选</button>
+              <button type="button" data-type="judge">判断</button>
+            </div>
+          </div>
+
+          <div class="group">
+            <label class="label" for="modeSelect">范围</label>
+            <select id="modeSelect">
+              <option value="all">全部题目</option>
+              <option value="wrong">错题</option>
+              <option value="unanswered">未答</option>
+            </select>
+          </div>
+
+          <div class="group">
+            <label class="label" for="searchInput">搜索</label>
+            <input id="searchInput" type="search" placeholder="题干或选项" />
+          </div>
+
+          <div class="tool-row">
+            <button class="tool-button" type="button" id="shuffleBtn">打乱</button>
+            <button class="tool-button" type="button" id="resetBtn">重置</button>
+          </div>
+        </aside>
+
+        <section class="panel question-panel" aria-live="polite">
+          <div class="progress-shell" aria-hidden="true">
+            <div class="progress-bar" id="progressBar"></div>
+          </div>
+
+          <div id="questionView">
+            <div class="question-head">
+              <div>
+                <div class="tags" id="questionTags"></div>
+                <p class="prompt" id="prompt"></p>
+              </div>
+              <div class="counter" id="counter"></div>
+            </div>
+          </div>
+
+          <div class="options" id="options"></div>
+
+          <div class="feedback" id="feedback"></div>
+
+          <div class="actions">
+            <button class="ghost" type="button" id="prevBtn">上一题</button>
+            <button class="primary" type="button" id="submitBtn">判题</button>
+            <button class="ghost" type="button" id="nextBtn">下一题</button>
+          </div>
+
+          <div class="empty" id="emptyState">当前范围没有题目</div>
+        </section>
+
+        <aside class="panel summary">
+          <div class="stat-grid">
+            <div class="stat">
+              <span class="num" id="answeredCount">0</span>
+              <span class="name">已答</span>
+            </div>
+            <div class="stat">
+              <span class="num" id="correctCount">0</span>
+              <span class="name">正确</span>
+            </div>
+            <div class="stat">
+              <span class="num" id="wrongCount">0</span>
+              <span class="name">错题</span>
+            </div>
+            <div class="stat">
+              <span class="num" id="rateCount">0%</span>
+              <span class="name">正确率</span>
+            </div>
+          </div>
+          <div class="group">
+            <div class="label">题号</div>
+            <div class="nav-grid" id="navGrid"></div>
+          </div>
+        </aside>
+      </section>
+    </main>
+
+    <script>
+window.QUESTION_BANK = {
+  "generatedFrom": "习概章节练习题",
+  "total": 270,
+  "questions": [
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 1,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "改革开放"
+        },
+        {
+          "label": "B",
+          "text": "中国特色社会主义"
+        },
+        {
+          "label": "C",
+          "text": "社会主义现代化"
+        },
+        {
+          "label": "D",
+          "text": "中国式现代化"
+        }
+      ],
+      "answer": "B",
+      "prompt": "（ ）是党和人民历经千辛万苦、付出巨大代价取得的根本成就，是实现中华民族伟大复兴的必由之路。",
+      "id": "q0001"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 2,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "历史维度"
+        },
+        {
+          "label": "B",
+          "text": "战略方向"
+        },
+        {
+          "label": "C",
+          "text": "战略格局"
+        },
+        {
+          "label": "D",
+          "text": "历史方位"
+        }
+      ],
+      "answer": "D",
+      "prompt": "党的十八大以来,中国特色社会主义进入新时代，这是我国发展新的（ ）。",
+      "id": "q0002"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 3,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "五四运动"
+        },
+        {
+          "label": "B",
+          "text": "辛亥革命"
+        },
+        {
+          "label": "C",
+          "text": "新文化运动"
+        },
+        {
+          "label": "D",
+          "text": "十月革命"
+        }
+      ],
+      "answer": "D",
+      "prompt": "（ ）一声炮响，使中国先进分子看到了一条崭新的道路，燃起了实现民族独立和人民解放的新希望。",
+      "id": "q0003"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 4,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "科学社会主义"
+        },
+        {
+          "label": "B",
+          "text": "唯物史观"
+        },
+        {
+          "label": "C",
+          "text": "社会主义革命"
+        },
+        {
+          "label": "D",
+          "text": "中国特色社会主义"
+        }
+      ],
+      "answer": "A",
+      "prompt": "（ ）是人类历史上的伟大创造，也是人类自我解放的伟大觉醒。",
+      "id": "q0004"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 5,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "道路自信"
+        },
+        {
+          "label": "B",
+          "text": "理论自信"
+        },
+        {
+          "label": "C",
+          "text": "制度自信"
+        },
+        {
+          "label": "D",
+          "text": "文化自信"
+        }
+      ],
+      "answer": "D",
+      "prompt": "（ ）是更基础、更广泛、更深厚的自信，是一个国家、一个民族发展中最基本、最深沉、最持久的力量",
+      "id": "q0005"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 6,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "新时代"
+        },
+        {
+          "label": "B",
+          "text": "新阶段"
+        },
+        {
+          "label": "C",
+          "text": "新发展"
+        },
+        {
+          "label": "D",
+          "text": "新时期"
+        }
+      ],
+      "answer": "A",
+      "prompt": "（ ）是我国发展新的历史方位，标志着中国特色社会主义事业进入了新的发展阶段。",
+      "id": "q0006"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 7,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "人民日益增长的美好生活需要和不平衡不充分的发展之间的矛盾"
+        },
+        {
+          "label": "B",
+          "text": "人民日益增长的美好生活需要和不充分不平衡的发展之间的矛盾"
+        },
+        {
+          "label": "C",
+          "text": "人民日益增长的幸福生活需要和不充分不平衡的发展之间的矛盾"
+        },
+        {
+          "label": "D",
+          "text": "人民日益增长的幸福生活需要和不平衡不充分的发展之间的矛盾"
+        }
+      ],
+      "answer": "A",
+      "prompt": "在新中国成立特别是改革开放以来取得重大成就的基础上,我国发展站在了新的历史起点上，社会主要矛盾已由人民日益增长的物质文化需要同落后的社会生产之间的矛盾，转化为（ ）。",
+      "id": "q0007"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 8,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "脱贫攻坚任务的胜利"
+        },
+        {
+          "label": "B",
+          "text": "中国特色社会主义进入新时代"
+        },
+        {
+          "label": "C",
+          "text": "第一个百年奋斗目标"
+        },
+        {
+          "label": "D",
+          "text": "社会主义现代化"
+        }
+      ],
+      "answer": "C",
+      "prompt": "党的十八大后，党面临的主要任务是，实现（ ）,开启实现第二个百年奋斗目标新征程，朝着实现中华民族伟大复兴的宏伟目标继续前进。",
+      "id": "q0008"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 9,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "正在进行"
+        },
+        {
+          "label": "B",
+          "text": "未能进行"
+        },
+        {
+          "label": "C",
+          "text": "已经改变"
+        },
+        {
+          "label": "D",
+          "text": "没有改变"
+        }
+      ],
+      "answer": "D",
+      "prompt": "新时代我国社会主要矛盾的变化，是在社会主义初级阶段中发生的变化，（ ）对我国社会主义所处历史阶段的判断。",
+      "id": "q0009"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 10,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "中国式现代化"
+        },
+        {
+          "label": "B",
+          "text": "中国特色社会主义"
+        },
+        {
+          "label": "C",
+          "text": "供给侧结构性改革"
+        },
+        {
+          "label": "D",
+          "text": "“四个全面”战略布局"
+        }
+      ],
+      "answer": "A",
+      "prompt": "科学社会主义在21世纪的中国焕发出新的蓬勃生机，（ ）为人类实现现代化提供了新的选择，中国共产党和中国人民为解决人类面临的共同问题提供更多更好的中国智慧、中国方案、中国力量，为人类和平与发展崇高事业作出新的更大的贡献！",
+      "id": "q0010"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 11,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "党的基本路线"
+        },
+        {
+          "label": "B",
+          "text": "党的基本方略"
+        },
+        {
+          "label": "C",
+          "text": "党的基本理论"
+        },
+        {
+          "label": "D",
+          "text": "党的基本原则"
+        }
+      ],
+      "answer": "C",
+      "prompt": "（ ）是坚持和发展中国特色社会主义的行动指南。",
+      "id": "q0011"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 12,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "中国化时代化的马克思主义行"
+        },
+        {
+          "label": "B",
+          "text": "中国式现代化行"
+        },
+        {
+          "label": "C",
+          "text": "中华民族伟大复兴战略行"
+        },
+        {
+          "label": "D",
+          "text": "人类社会发展规律行"
+        }
+      ],
+      "answer": "A",
+      "prompt": "中国共产党为什么能，中国特色社会主义为什么好，归根到底是马克思主义行，是（ ）。",
+      "id": "q0012"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 13,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "“五位一体”总体布局"
+        },
+        {
+          "label": "B",
+          "text": "习近平新时代中国特色社会主义思想"
+        },
+        {
+          "label": "C",
+          "text": "习近平法治思想"
+        },
+        {
+          "label": "D",
+          "text": "习近平文化思想"
+        }
+      ],
+      "answer": "B",
+      "prompt": "（ ）是新时代中国共产党的思想旗帜，是新时代党和国家事业发展的根本遵循。",
+      "id": "q0013"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 14,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "党的基本路线"
+        },
+        {
+          "label": "B",
+          "text": "党的基本方略"
+        },
+        {
+          "label": "C",
+          "text": "党的基本理论"
+        },
+        {
+          "label": "D",
+          "text": "党的群众路线"
+        }
+      ],
+      "answer": "A",
+      "prompt": "（ ）是国家的生命线、人民的幸福线。",
+      "id": "q0014"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 15,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "“十个明确”"
+        },
+        {
+          "label": "B",
+          "text": "“十四个坚持”"
+        },
+        {
+          "label": "C",
+          "text": "“十三个方面”"
+        },
+        {
+          "label": "D",
+          "text": "“六个必须坚持”"
+        }
+      ],
+      "answer": "B",
+      "prompt": "党的十九大概括的以（ ）为主要内容的基本方略，涵盖了坚持党的全面领导和全面从严治党，涵盖了“五位一体”总体布局和“四个全面”战略布局，涵盖了国防和军队建设、维护国家安全、“一国两制”和祖国统一、对外战略等方面，反映了我们党对建设中国特色社会主义的规律性认识。",
+      "id": "q0015"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 16,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "“十个明确”"
+        },
+        {
+          "label": "B",
+          "text": "“十四个坚持”"
+        },
+        {
+          "label": "C",
+          "text": "“四个全面”战略布局"
+        },
+        {
+          "label": "D",
+          "text": "“五位一体”总体布局"
+        }
+      ],
+      "answer": "C",
+      "prompt": "（ ），是新的时代条件下坚持和发展中国特色社会主义、推进改革开放和社会主义现代化建设的战略抉择。",
+      "id": "q0016"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 17,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "马克思主义"
+        },
+        {
+          "label": "B",
+          "text": "社会主义"
+        },
+        {
+          "label": "C",
+          "text": "中国特色社会主义"
+        },
+        {
+          "label": "D",
+          "text": "社会主义现代化"
+        }
+      ],
+      "answer": "B",
+      "prompt": "（ ）是前无古人的伟大事业，没有现成的方案可以遵循，必须随着时代、实践和科学的发展不断探索前进。",
+      "id": "q0017"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 18,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "初级阶段"
+        },
+        {
+          "label": "B",
+          "text": "高级阶段"
+        },
+        {
+          "label": "C",
+          "text": "发展阶段"
+        },
+        {
+          "label": "D",
+          "text": "困难阶段"
+        }
+      ],
+      "answer": "A",
+      "prompt": "我国社会主义还处在（ ）,我们还面临很多没有弄清楚的问题和待解的难题，对许多重大问题的认识和处理都还处在不断深化的过程之中，这一点也不容置疑。",
+      "id": "q0018"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 19,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "坚持人民至上"
+        },
+        {
+          "label": "B",
+          "text": "发扬斗争精神"
+        },
+        {
+          "label": "C",
+          "text": "坚持马克思主义"
+        },
+        {
+          "label": "D",
+          "text": "坚定初心使命"
+        }
+      ],
+      "answer": "B",
+      "prompt": "要把握新的伟大斗争的历史特点，（ ），增强斗争本领，凝聚起全党全国各族人民的意志和力量，全力战胜一切可以预见和难以预见的风险挑战。",
+      "id": "q0019"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 20,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "不同社会制度选择"
+        },
+        {
+          "label": "B",
+          "text": "人类社会发展"
+        },
+        {
+          "label": "C",
+          "text": "人类文明进步"
+        },
+        {
+          "label": "D",
+          "text": "世界和平发展"
+        }
+      ],
+      "answer": "B",
+      "prompt": "中国共产党人用自己的实践、奋斗和精神，不断揭示着（ ）的必然趋势，不断展现着社会主义制度的优越性和共产主义的光明前景。",
+      "id": "q0020"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 1,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "只有社会主义才能救中国"
+        },
+        {
+          "label": "B",
+          "text": "只有社会主义才能发展中国"
+        },
+        {
+          "label": "C",
+          "text": "只有坚持和发展中国特色社会主义"
+        },
+        {
+          "label": "D",
+          "text": "只有坚持世界大国地位"
+        }
+      ],
+      "answer": "ABC",
+      "prompt": "历史和实践充分证明，（ ）才能实现中华民族伟大复兴。",
+      "id": "q0021"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 2,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "中国社会发展的必然选择"
+        },
+        {
+          "label": "B",
+          "text": "历史和人民的选择"
+        },
+        {
+          "label": "C",
+          "text": "中国道路的必然选择"
+        },
+        {
+          "label": "D",
+          "text": "社会进步发展的选择"
+        }
+      ],
+      "answer": "AB",
+      "prompt": "习近平指出：“中国特色社会主义，承载着几代中国共产党人的理想和探索，寄托着无数仁人志士的意愿和期盼,凝聚着千千万万革命先烈的奋斗和牺牲，凝聚着全国各族人民的奋斗和实践，是近代以来，是（ ）。”",
+      "id": "q0022"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 3,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "争取民族独立、社会发展"
+        },
+        {
+          "label": "B",
+          "text": "争取民族独立、人民解放"
+        },
+        {
+          "label": "C",
+          "text": "实现国家富强、人民幸福"
+        },
+        {
+          "label": "D",
+          "text": "实现国家富强、世界大同"
+        }
+      ],
+      "answer": "BC",
+      "prompt": "1840年鸦片战争以后，中国逐步成为半殖民地半封建社会，（ ）成为中国人民的历史任务。",
+      "id": "q0023"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 4,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "道路自信"
+        },
+        {
+          "label": "B",
+          "text": "理论自信"
+        },
+        {
+          "label": "C",
+          "text": "制度自信"
+        },
+        {
+          "label": "D",
+          "text": "文化自信"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "新时代坚持和发展中国特色社会主义，必须坚定（ ）。",
+      "id": "q0024"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 5,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "新民主主义革命时期"
+        },
+        {
+          "label": "B",
+          "text": "社会主义革命和建设时期"
+        },
+        {
+          "label": "C",
+          "text": "改革开放和社会主义现代化建设新时期"
+        },
+        {
+          "label": "D",
+          "text": "中国特色社会主义新时代"
+        }
+      ],
+      "answer": "ABC",
+      "prompt": "我们党领导人民完成了（ ）的主要任务，为实现中华民族伟大复兴提供了重要的基础和保证。",
+      "id": "q0025"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 6,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "世界百年未有之大变局"
+        },
+        {
+          "label": "B",
+          "text": "中华民族伟大复兴战略"
+        },
+        {
+          "label": "C",
+          "text": "世纪疫情大流行"
+        },
+        {
+          "label": "D",
+          "text": "人类命运共同体建设"
+        }
+      ],
+      "answer": "AB",
+      "prompt": "当今时代，世界进入新的动荡变革期，（ ）全局相互交织、深度互动，中国同国际社会的联系空前紧密，中国对世界的依靠、对国际事务的参与在不断加深，世界对中国的依靠、对中国的影响也在不断加深。",
+      "id": "q0026"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 7,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "社会主义初级阶段"
+        },
+        {
+          "label": "B",
+          "text": "社会主义发展阶段"
+        },
+        {
+          "label": "C",
+          "text": "世界最大发展中国家"
+        },
+        {
+          "label": "D",
+          "text": "世界最大影响力国家"
+        }
+      ],
+      "answer": "AC",
+      "prompt": "我们既要看到我国社会主要矛盾发生的变化，也要看到我国仍处于并将长期处于（ ）的基本国情没有变，我国是（ ）的国际地位没有变。",
+      "id": "q0027"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 8,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "实现历史性跨越"
+        },
+        {
+          "label": "B",
+          "text": "取得历史性成就"
+        },
+        {
+          "label": "C",
+          "text": "发生历史性变革"
+        },
+        {
+          "label": "D",
+          "text": "创造历史性发展"
+        }
+      ],
+      "answer": "BC",
+      "prompt": "进入新时代，以习近平同志为核心的党中央准确把握我国发展新的历史方位，不断深化对中国特色社会主义建设规律的认识，……解决了许多长期想解决而没有解决的难题，办成了许多过去想办而没有办成的大事，党和国家事业（ ）,推动我国迈上全面建设社会主义现代化国家新征程。",
+      "id": "q0028"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 9,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "自我净化"
+        },
+        {
+          "label": "B",
+          "text": "自我完善"
+        },
+        {
+          "label": "C",
+          "text": "自我革新"
+        },
+        {
+          "label": "D",
+          "text": "自我提高"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "全面从严治党不断深化，党的（ ）能力显著增强，管党治党宽松软状况得到根本扭转，反腐败斗争取得压倒性胜利并全面巩固……",
+      "id": "q0029"
+    },
+    {
+      "chapter": "第一章 新时代坚持和发展中国特色社会主义",
+      "chapterOrder": 1,
+      "number": 10,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "政治领导力"
+        },
+        {
+          "label": "B",
+          "text": "思想引领力"
+        },
+        {
+          "label": "C",
+          "text": "群众组织力"
+        },
+        {
+          "label": "D",
+          "text": "社会号召力"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "走过百年奋斗历程的中国共产党在革命性锻造中更加坚强有力，党的（ ）显著增强，党同人民群众始终保持血肉联系……",
+      "id": "q0030"
+    },
+    {
+      "chapter": "第二章 以中国式现代化全面推进中华民族伟大复兴",
+      "chapterOrder": 2,
+      "number": 1,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "社会主义现代化建设"
+        },
+        {
+          "label": "B",
+          "text": "中国特色社会主义"
+        },
+        {
+          "label": "C",
+          "text": "国家富强民族振兴"
+        },
+        {
+          "label": "D",
+          "text": "实现中华民族伟大复兴"
+        }
+      ],
+      "answer": "D",
+      "prompt": "（ ），是近代以来中国人民的共同梦想，是中国共产党矢志不渝的奋斗目标。",
+      "id": "q0031"
+    },
+    {
+      "chapter": "第二章 以中国式现代化全面推进中华民族伟大复兴",
+      "chapterOrder": 2,
+      "number": 2,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "2018年7月1日"
+        },
+        {
+          "label": "B",
+          "text": "2019年7月1日"
+        },
+        {
+          "label": "C",
+          "text": "2021年7月1日"
+        },
+        {
+          "label": "D",
+          "text": "2022年7月1日"
+        }
+      ],
+      "answer": "C",
+      "prompt": "（ ），习近平在庆祝中国共产党成立100周年大会上庄严宣告：“经过全党全国各族人民持续奋斗，我们实现了第一个百年奋斗目标，在中华大地上全面建成了小康社会，历史性地解决了绝对贫困问题，正在意气风发向着全面建成社会主义现代化强国的第二个百年奋斗目标迈进。”",
+      "id": "q0032"
+    },
+    {
+      "chapter": "第二章 以中国式现代化全面推进中华民族伟大复兴",
+      "chapterOrder": 2,
+      "number": 3,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "打赢脱贫攻坚战"
+        },
+        {
+          "label": "B",
+          "text": "成为世界第二大经济体"
+        },
+        {
+          "label": "C",
+          "text": "中国特色社会主义进入新时代"
+        },
+        {
+          "label": "D",
+          "text": "如期全面建成小康社会"
+        }
+      ],
+      "answer": "D",
+      "prompt": "（ ），标志着第一个百年奋斗目标胜利实现，国家更富强、人民更幸福、社会更稳定、环境更优美，人民获得感幸福感安全感显著提升，中华民族实现了从大幅落后于时代到大踏步赶上时代的新跨越。",
+      "id": "q0033"
+    },
+    {
+      "chapter": "第二章 以中国式现代化全面推进中华民族伟大复兴",
+      "chapterOrder": 2,
+      "number": 4,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "10年"
+        },
+        {
+          "label": "B",
+          "text": "15年"
+        },
+        {
+          "label": "C",
+          "text": "20年"
+        },
+        {
+          "label": "D",
+          "text": "25年"
+        }
+      ],
+      "answer": "A",
+      "prompt": "摆脱贫困一直是困扰全球发展和治理的突出难题，我国提前（ ）实现联合国2030年可持续发展议程减贫目标。",
+      "id": "q0034"
+    },
+    {
+      "chapter": "第二章 以中国式现代化全面推进中华民族伟大复兴",
+      "chapterOrder": 2,
+      "number": 5,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "从2020年到2035年"
+        },
+        {
+          "label": "B",
+          "text": "从2020年到2045年"
+        },
+        {
+          "label": "C",
+          "text": "从2035年到2050年"
+        },
+        {
+          "label": "D",
+          "text": "从2035年到本世纪中叶"
+        }
+      ],
+      "answer": "D",
+      "prompt": "（ ）把我国建成富强民主文明和谐美丽的社会主义现代化强国。",
+      "id": "q0035"
+    },
+    {
+      "chapter": "第二章 以中国式现代化全面推进中华民族伟大复兴",
+      "chapterOrder": 2,
+      "number": 6,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "《建国方略》"
+        },
+        {
+          "label": "B",
+          "text": "《现代化之路》"
+        },
+        {
+          "label": "C",
+          "text": "《中国方案》"
+        },
+        {
+          "label": "D",
+          "text": "《振兴中华》"
+        }
+      ],
+      "answer": "A",
+      "prompt": "孙中山领导辛亥革命试图以建立资产阶级共和国、振兴实业等方案来实现现代化，他的（ ）被称为近代中国谋求现代化的第一份蓝图。",
+      "id": "q0036"
+    },
+    {
+      "chapter": "第二章 以中国式现代化全面推进中华民族伟大复兴",
+      "chapterOrder": 2,
+      "number": 7,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "党的领导"
+        },
+        {
+          "label": "B",
+          "text": "人民当家作主"
+        },
+        {
+          "label": "C",
+          "text": "依法治国"
+        },
+        {
+          "label": "D",
+          "text": "中国特色社会主义"
+        }
+      ],
+      "answer": "A",
+      "prompt": "（ ）决定中国式现代化的根本性质……",
+      "id": "q0037"
+    },
+    {
+      "chapter": "第二章 以中国式现代化全面推进中华民族伟大复兴",
+      "chapterOrder": 2,
+      "number": 8,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "文化"
+        },
+        {
+          "label": "B",
+          "text": "中国共产党的领导"
+        },
+        {
+          "label": "C",
+          "text": "人民"
+        },
+        {
+          "label": "D",
+          "text": "中华文明"
+        }
+      ],
+      "answer": "C",
+      "prompt": "（ ）是推进现代化最坚实的根基、最深厚的力量。",
+      "id": "q0038"
+    },
+    {
+      "chapter": "第二章 以中国式现代化全面推进中华民族伟大复兴",
+      "chapterOrder": 2,
+      "number": 9,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "文化自信"
+        },
+        {
+          "label": "B",
+          "text": "人民至上"
+        },
+        {
+          "label": "C",
+          "text": "社会主义制度"
+        },
+        {
+          "label": "D",
+          "text": "独立自主"
+        }
+      ],
+      "answer": "D",
+      "prompt": "（ ）是中华民族精神之魂，是我们立党立国的重要原则。",
+      "id": "q0039"
+    },
+    {
+      "chapter": "第二章 以中国式现代化全面推进中华民族伟大复兴",
+      "chapterOrder": 2,
+      "number": 10,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "自力更生"
+        },
+        {
+          "label": "B",
+          "text": "团结奋斗"
+        },
+        {
+          "label": "C",
+          "text": "斗争精神"
+        },
+        {
+          "label": "D",
+          "text": "中国精神"
+        }
+      ],
+      "answer": "B",
+      "prompt": "（ ）是中国共产党和中国人民最显著的精神标识，是中国人民创造历史伟业的必由之路。",
+      "id": "q0040"
+    },
+    {
+      "chapter": "第二章 以中国式现代化全面推进中华民族伟大复兴",
+      "chapterOrder": 2,
+      "number": 1,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "全面建成社会主义现代化强国"
+        },
+        {
+          "label": "B",
+          "text": "实现第一个百年奋斗目标"
+        },
+        {
+          "label": "C",
+          "text": "实现第二个百年奋斗目标"
+        },
+        {
+          "label": "D",
+          "text": "全面建成社会主义现代化国家"
+        }
+      ],
+      "answer": "AC",
+      "prompt": "新时代新征程中国共产党的中心任务，就是团结带领全国各族人民、（ ），以中国式现代化全面推进中华民族伟大复兴。",
+      "id": "q0041"
+    },
+    {
+      "chapter": "第二章 以中国式现代化全面推进中华民族伟大复兴",
+      "chapterOrder": 2,
+      "number": 2,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "国家富强"
+        },
+        {
+          "label": "B",
+          "text": "民族振兴"
+        },
+        {
+          "label": "C",
+          "text": "人民幸福"
+        },
+        {
+          "label": "D",
+          "text": "世界大同"
+        }
+      ],
+      "answer": "ABC",
+      "prompt": "实现中华民族伟大复兴的中国梦，本质是（ ）。",
+      "id": "q0042"
+    },
+    {
+      "chapter": "第二章 以中国式现代化全面推进中华民族伟大复兴",
+      "chapterOrder": 2,
+      "number": 3,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "伟大斗争"
+        },
+        {
+          "label": "B",
+          "text": "伟大工程"
+        },
+        {
+          "label": "C",
+          "text": "伟大事业"
+        },
+        {
+          "label": "D",
+          "text": "伟大梦想"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "我们要统揽（ ），劾力同心、接力奋斗，用实干托起中国梦。",
+      "id": "q0043"
+    },
+    {
+      "chapter": "第二章 以中国式现代化全面推进中华民族伟大复兴",
+      "chapterOrder": 2,
+      "number": 4,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "管总"
+        },
+        {
+          "label": "B",
+          "text": "管根本"
+        },
+        {
+          "label": "C",
+          "text": "管长远"
+        },
+        {
+          "label": "D",
+          "text": "管大局"
+        }
+      ],
+      "answer": "AB",
+      "prompt": "中国式现代化是中国共产党领导的社会主义现代化，这是对中国式现代化的定性，是（ ）的。",
+      "id": "q0044"
+    },
+    {
+      "chapter": "第二章 以中国式现代化全面推进中华民族伟大复兴",
+      "chapterOrder": 2,
+      "number": 5,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "中华五千年灿烂文明"
+        },
+        {
+          "label": "B",
+          "text": "中华优秀传统文化"
+        },
+        {
+          "label": "C",
+          "text": "科学社会主义"
+        },
+        {
+          "label": "D",
+          "text": "中国特色社会主义"
+        }
+      ],
+      "answer": "BC",
+      "prompt": "中国式现代化，深深植根于（ ），体现（ ）的先进本质，借鉴吸收一切人类优秀文明成果，代表人类文明进步的发展方向，是一种全新的人类文明形态。",
+      "id": "q0045"
+    },
+    {
+      "chapter": "第二章 以中国式现代化全面推进中华民族伟大复兴",
+      "chapterOrder": 2,
+      "number": 6,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "以经济建设为中心"
+        },
+        {
+          "label": "B",
+          "text": "坚持四项基本原则"
+        },
+        {
+          "label": "C",
+          "text": "坚持改革开放"
+        },
+        {
+          "label": "D",
+          "text": "坚持独立自主、自力更生"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "推进中国式现代化，必须坚持（ ），坚持道不变、志不改，既不走封闭僵化的老路，也不走改旗易帜的邪路，始终坚持和发展中国特色社会主义。",
+      "id": "q0046"
+    },
+    {
+      "chapter": "第三章 坚持党的全面领导",
+      "chapterOrder": 3,
+      "number": 1,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "人民"
+        },
+        {
+          "label": "B",
+          "text": "工人阶级"
+        },
+        {
+          "label": "C",
+          "text": "知识分子"
+        },
+        {
+          "label": "D",
+          "text": "中国共产党"
+        }
+      ],
+      "answer": "D",
+      "prompt": "（ ）是中国特色社会主义事业的坚强领导核心。",
+      "id": "q0047"
+    },
+    {
+      "chapter": "第三章 坚持党的全面领导",
+      "chapterOrder": 3,
+      "number": 2,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "人民当家作主"
+        },
+        {
+          "label": "B",
+          "text": "社会主义法治国家"
+        },
+        {
+          "label": "C",
+          "text": "中国共产党领导"
+        },
+        {
+          "label": "D",
+          "text": "社会主义基本制度"
+        }
+      ],
+      "answer": "C",
+      "prompt": "（ ）是实现中华民族伟大复兴的根本保证。",
+      "id": "q0048"
+    },
+    {
+      "chapter": "第三章 坚持党的全面领导",
+      "chapterOrder": 3,
+      "number": 3,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "马克思主义中国化时代化"
+        },
+        {
+          "label": "B",
+          "text": "人民共同富裕"
+        },
+        {
+          "label": "C",
+          "text": "马克思主义"
+        },
+        {
+          "label": "D",
+          "text": "如期全面建成小康社会"
+        }
+      ],
+      "answer": "C",
+      "prompt": "中国共产党以（ ）作为行动指南，在实践中不断推进马克思主义中国化时代化，为坚持和完善中国特色社会主义制度提供强大理论优势。",
+      "id": "q0049"
+    },
+    {
+      "chapter": "第三章 坚持党的全面领导",
+      "chapterOrder": 3,
+      "number": 4,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "中国共产党的自身优势"
+        },
+        {
+          "label": "B",
+          "text": "科学社会主义"
+        },
+        {
+          "label": "C",
+          "text": "社会主义改革开放"
+        },
+        {
+          "label": "D",
+          "text": "“两个一百年”"
+        }
+      ],
+      "answer": "A",
+      "prompt": "（ ）是中国特色社会主义制度优势的主要来源。",
+      "id": "q0050"
+    },
+    {
+      "chapter": "第三章 坚持党的全面领导",
+      "chapterOrder": 3,
+      "number": 5,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "政治领导力"
+        },
+        {
+          "label": "B",
+          "text": "思想引领力"
+        },
+        {
+          "label": "C",
+          "text": "群众组织力"
+        },
+        {
+          "label": "D",
+          "text": "社会号召力"
+        }
+      ],
+      "answer": "A",
+      "prompt": "（ ）是马克思主义政党第一位的能力",
+      "id": "q0051"
+    },
+    {
+      "chapter": "第三章 坚持党的全面领导",
+      "chapterOrder": 3,
+      "number": 6,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "零容忍"
+        },
+        {
+          "label": "B",
+          "text": "反腐败"
+        },
+        {
+          "label": "C",
+          "text": "党内民主"
+        },
+        {
+          "label": "D",
+          "text": "人民监督"
+        }
+      ],
+      "answer": "B",
+      "prompt": "（ ）是最彻底的自我革命……",
+      "id": "q0052"
+    },
+    {
+      "chapter": "第三章 坚持党的全面领导",
+      "chapterOrder": 3,
+      "number": 7,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "中国特色社会主义制度"
+        },
+        {
+          "label": "B",
+          "text": "人民当家作主"
+        },
+        {
+          "label": "C",
+          "text": "全面依法治国"
+        },
+        {
+          "label": "D",
+          "text": "党中央权威和集中统一领导"
+        }
+      ],
+      "answer": "D",
+      "prompt": "维护（ ），是一个成熟的马克思主义执政党的重大建党原则。",
+      "id": "q0053"
+    },
+    {
+      "chapter": "第三章 坚持党的全面领导",
+      "chapterOrder": 3,
+      "number": 8,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "社会主义"
+        },
+        {
+          "label": "B",
+          "text": "民主集中制"
+        },
+        {
+          "label": "C",
+          "text": "政治协商制度"
+        },
+        {
+          "label": "D",
+          "text": "党内监督"
+        }
+      ],
+      "answer": "B",
+      "prompt": "中国共产党是以（ ）为根本组织原则和领导制度的马克思主义政党。",
+      "id": "q0054"
+    },
+    {
+      "chapter": "第三章 坚持党的全面领导",
+      "chapterOrder": 3,
+      "number": 9,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "人民代表大会制度"
+        },
+        {
+          "label": "B",
+          "text": "党的领导制度"
+        },
+        {
+          "label": "C",
+          "text": "社会主义制度"
+        },
+        {
+          "label": "D",
+          "text": "民主集中制"
+        }
+      ],
+      "answer": "B",
+      "prompt": "中国共产党领导是国家治理体系的核心，（ ）是中国特色社会主义制度建设的关键。",
+      "id": "q0055"
+    },
+    {
+      "chapter": "第三章 坚持党的全面领导",
+      "chapterOrder": 3,
+      "number": 10,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "人民"
+        },
+        {
+          "label": "B",
+          "text": "工人"
+        },
+        {
+          "label": "C",
+          "text": "知识分子"
+        },
+        {
+          "label": "D",
+          "text": "中国共产党"
+        }
+      ],
+      "answer": "D",
+      "prompt": "我国社会主义政治制度优越性的一个突出特点是党总揽全局、协调各方的领导核心作用，形象地说是“众星捧月”，这个“月”就是（ ）。",
+      "id": "q0056"
+    },
+    {
+      "chapter": "第三章 坚持党的全面领导",
+      "chapterOrder": 3,
+      "number": 1,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "中国最广大人民根本利益"
+        },
+        {
+          "label": "B",
+          "text": "中国的基本国情"
+        },
+        {
+          "label": "C",
+          "text": "实现中华民族伟大复兴历史任务"
+        },
+        {
+          "label": "D",
+          "text": "全面建成社会主义现代化国家"
+        }
+      ],
+      "answer": "AC",
+      "prompt": "中国特色社会主义有很多特点和特征，其中最本质的特征是中国共产党领导。这个最本质特征是在近代以来中国历史发展中形成的，是由（ ）决定的。",
+      "id": "q0057"
+    },
+    {
+      "chapter": "第三章 坚持党的全面领导",
+      "chapterOrder": 3,
+      "number": 2,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "在于坚持科学社会主义基本原则"
+        },
+        {
+          "label": "B",
+          "text": "在于坚持中国共产党的领导"
+        },
+        {
+          "label": "C",
+          "text": "在于坚持中国特色社会主义"
+        },
+        {
+          "label": "D",
+          "text": "在于坚持社会主义道路"
+        }
+      ],
+      "answer": "AB",
+      "prompt": "中国特色社会主义之所以是社会主义，究其根本就（ ）。",
+      "id": "q0058"
+    },
+    {
+      "chapter": "第三章 坚持党的全面领导",
+      "chapterOrder": 3,
+      "number": 3,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "自我净化"
+        },
+        {
+          "label": "B",
+          "text": "自我完善"
+        },
+        {
+          "label": "C",
+          "text": "自我革新"
+        },
+        {
+          "label": "D",
+          "text": "自我提高"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "党始终坚持真理、修正错误，（ ），始终保持强大的创造力、凝聚力、战斗力。",
+      "id": "q0059"
+    },
+    {
+      "chapter": "第三章 坚持党的全面领导",
+      "chapterOrder": 3,
+      "number": 4,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "政治领导力"
+        },
+        {
+          "label": "B",
+          "text": "思想引领力"
+        },
+        {
+          "label": "C",
+          "text": "群众组织力"
+        },
+        {
+          "label": "D",
+          "text": "社会号召力"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "坚持和加强党的全面领导，使党的（ ）显著增强。",
+      "id": "q0060"
+    },
+    {
+      "chapter": "第三章 坚持党的全面领导",
+      "chapterOrder": 3,
+      "number": 5,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "整体斗争"
+        },
+        {
+          "label": "B",
+          "text": "人民战争"
+        },
+        {
+          "label": "C",
+          "text": "总体战"
+        },
+        {
+          "label": "D",
+          "text": "阻击战"
+        }
+      ],
+      "answer": "BCD",
+      "prompt": "面对突如其来的新冠疫情，我们党统揽全局、果断决策，坚持人民至上、生命至上，第一时间调动全国力量，迅速打响疫情防控的（ ），党的基层组织全面动员，奋力夺取疫情防控重大决定性胜利。",
+      "id": "q0061"
+    },
+    {
+      "chapter": "第三章 坚持党的全面领导",
+      "chapterOrder": 3,
+      "number": 6,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "全面的"
+        },
+        {
+          "label": "B",
+          "text": "系统的"
+        },
+        {
+          "label": "C",
+          "text": "整体的"
+        },
+        {
+          "label": "D",
+          "text": "多元的"
+        }
+      ],
+      "answer": "ABC",
+      "prompt": "中国共产党是最高政治领导力量，党的领导是（ ），必须坚持党对一切工作的领导",
+      "id": "q0062"
+    },
+    {
+      "chapter": "第三章 坚持党的全面领导",
+      "chapterOrder": 3,
+      "number": 7,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "国家性质"
+        },
+        {
+          "label": "B",
+          "text": "政治制度体系"
+        },
+        {
+          "label": "C",
+          "text": "基本国情"
+        },
+        {
+          "label": "D",
+          "text": "时代特征"
+        }
+      ],
+      "answer": "AB",
+      "prompt": "中国共产党作为最高政治领导力量是由我国（ ）决定的。",
+      "id": "q0063"
+    },
+    {
+      "chapter": "第五章 全面深化改革",
+      "chapterOrder": 5,
+      "number": 1,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "全面建设社会主义现代化强国"
+        },
+        {
+          "label": "B",
+          "text": "改革开放"
+        },
+        {
+          "label": "C",
+          "text": "全面依法治国"
+        },
+        {
+          "label": "D",
+          "text": "全面从严治党"
+        }
+      ],
+      "answer": "B",
+      "prompt": "（ ）是决定当代中国命运的关键一招，也是决定实现“两个一百年”奋斗目标，实现中华民族伟大复兴的关键一招。",
+      "id": "q0064"
+    },
+    {
+      "chapter": "第五章 全面深化改革",
+      "chapterOrder": 5,
+      "number": 2,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "开启了改革开放和社会主义现代化建设历史新时期"
+        },
+        {
+          "label": "B",
+          "text": "实现改革由局部探索、破冰突围到系统集成、全面深化的转变，开创了我国改革开放新局面。"
+        },
+        {
+          "label": "C",
+          "text": "开启了中国特色社会主义新时代"
+        },
+        {
+          "label": "D",
+          "text": "开启全面建设社会主义现代化国家新征程"
+        }
+      ],
+      "answer": "B",
+      "prompt": "党的十八届三中全会也是划时代的，它（ ）",
+      "id": "q0065"
+    },
+    {
+      "chapter": "第五章 全面深化改革",
+      "chapterOrder": 5,
+      "number": 3,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "完善和发展中国特色社会主义制度、推进国家治理体系和治理能力现代化"
+        },
+        {
+          "label": "B",
+          "text": "从2035年到本世纪中叶，建成富强民主文明和谐美丽的社会主义现代化强国"
+        },
+        {
+          "label": "C",
+          "text": "建设中国特色社会主义法治体系，建设社会主义法治国家"
+        },
+        {
+          "label": "D",
+          "text": "实现社会主义现代化和中华民族伟大复兴"
+        }
+      ],
+      "answer": "A",
+      "prompt": "全面深化改革总目标是（ ）",
+      "id": "q0066"
+    },
+    {
+      "chapter": "第五章 全面深化改革",
+      "chapterOrder": 5,
+      "number": 1,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "必须坚持和改善党的全面领导、坚持和完善中国特色社会主义制度"
+        },
+        {
+          "label": "B",
+          "text": "必须坚持以人民为中心，促进社会公平正义、增进人民福祉"
+        },
+        {
+          "label": "C",
+          "text": "必须在法治轨道上推进改革，不得通过修改法律的方式推进改革"
+        },
+        {
+          "label": "D",
+          "text": "必须有利于进一步解放思想、进一步解放和发展社会生产力、进一步解放和增强社会活力"
+        }
+      ],
+      "answer": "ABD",
+      "prompt": "习近平强调：“我们的改革开放是有方向、有立场、有原则的。”要求改革开放（ ）",
+      "id": "q0067"
+    },
+    {
+      "chapter": "第五章 全面深化改革",
+      "chapterOrder": 5,
+      "number": 2,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "“完善和发展中国特色社会主义制度”，规定了改革的根本方向"
+        },
+        {
+          "label": "B",
+          "text": "“推进国家治理体系和治理能力现代化”，明确了改革的鲜明指向和时代要求"
+        },
+        {
+          "label": "C",
+          "text": "“完善和发展中国特色社会主义制度”，明确了改革的鲜明指向和时代要求"
+        },
+        {
+          "label": "D",
+          "text": "“推进国家治理体系和治理能力现代化”，规定了改革的根本方向"
+        }
+      ],
+      "answer": "AB",
+      "prompt": "关于全面深化改革总目标，下列说法正确的是（ ）",
+      "id": "q0068"
+    },
+    {
+      "chapter": "第五章 全面深化改革",
+      "chapterOrder": 5,
+      "number": 3,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "国家治理体系是在党领导下管理国家的制度体系"
+        },
+        {
+          "label": "B",
+          "text": "国家治理能力是运用国家制度管理社会各方面事务的能力"
+        },
+        {
+          "label": "C",
+          "text": "国家治理能力可以不依赖国家制度，但国家治理体系必须依赖国家治理能力"
+        },
+        {
+          "label": "D",
+          "text": "国家治理体系和治理能力是一个有机整体，相辅相成"
+        }
+      ],
+      "answer": "ABD",
+      "prompt": "国家治理体系和治理能力是一个国家制度和制度执行能力的集中体现。下列说法正确的是（ ）",
+      "id": "q0069"
+    },
+    {
+      "chapter": "第五章 全面深化改革",
+      "chapterOrder": 5,
+      "number": 4,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "坚定中国特色社会主义制度自信"
+        },
+        {
+          "label": "B",
+          "text": "更好发挥中国特色社会主义制度优势"
+        },
+        {
+          "label": "C",
+          "text": "把中国特色社会主义制度优势转化为国家治理效能"
+        },
+        {
+          "label": "D",
+          "text": "使中国特色社会主义制度更加成熟更加定型"
+        }
+      ],
+      "answer": "ABC",
+      "prompt": "推进国家治理体系和治理能力现代化，必须（ ）",
+      "id": "q0070"
+    },
+    {
+      "chapter": "第五章 全面深化改革",
+      "chapterOrder": 5,
+      "number": 5,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "增强全面深化改革的系统性、整体性、协同性"
+        },
+        {
+          "label": "B",
+          "text": "加强顶层设计和摸着石头过河相结合"
+        },
+        {
+          "label": "C",
+          "text": "统筹改革发展稳定"
+        },
+        {
+          "label": "D",
+          "text": "胆子要大，步子要稳"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "全面深化改革开放要坚持正确方法论，包括（ ）",
+      "id": "q0071"
+    },
+    {
+      "chapter": "第五章 全面深化改革",
+      "chapterOrder": 5,
+      "number": 6,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "全面性"
+        },
+        {
+          "label": "B",
+          "text": "系统性"
+        },
+        {
+          "label": "C",
+          "text": "整体性"
+        },
+        {
+          "label": "D",
+          "text": "时代性"
+        }
+      ],
+      "answer": "ABC",
+      "prompt": "新时代全面深化改革具有（ ）鲜明特点",
+      "id": "q0072"
+    },
+    {
+      "chapter": "第五章 全面深化改革",
+      "chapterOrder": 5,
+      "number": 1,
+      "type": "judge",
+      "prompt": "改革开放是决定当代中国前途命运的关键一招。",
+      "options": [
+        {
+          "label": "T",
+          "text": "正确"
+        },
+        {
+          "label": "F",
+          "text": "错误"
+        }
+      ],
+      "answer": "T",
+      "id": "q0073"
+    },
+    {
+      "chapter": "第五章 全面深化改革",
+      "chapterOrder": 5,
+      "number": 2,
+      "type": "judge",
+      "prompt": "党的十八届三中全会首次提出了全面深化改革总目标——完善和发展中国特色社会主义制度、推进国家治理体系和治理能力现代化。",
+      "options": [
+        {
+          "label": "T",
+          "text": "正确"
+        },
+        {
+          "label": "F",
+          "text": "错误"
+        }
+      ],
+      "answer": "T",
+      "id": "q0074"
+    },
+    {
+      "chapter": "第五章 全面深化改革",
+      "chapterOrder": 5,
+      "number": 3,
+      "type": "judge",
+      "prompt": "面对西方单边制裁、极限施压，我国也要“筑墙设垒”“脱钩断链”。",
+      "options": [
+        {
+          "label": "T",
+          "text": "正确"
+        },
+        {
+          "label": "F",
+          "text": "错误"
+        }
+      ],
+      "answer": "F",
+      "id": "q0075"
+    },
+    {
+      "chapter": "第五章 全面深化改革",
+      "chapterOrder": 5,
+      "number": 4,
+      "type": "judge",
+      "prompt": "袁洪君老师指出：哈尔滨工程大学是顶级211，比肩985。学校进入国家“双一流”建设行列。",
+      "options": [
+        {
+          "label": "T",
+          "text": "正确"
+        },
+        {
+          "label": "F",
+          "text": "错误"
+        }
+      ],
+      "answer": "T",
+      "id": "q0076"
+    },
+    {
+      "chapter": "第五章 全面深化改革",
+      "chapterOrder": 5,
+      "number": 5,
+      "type": "judge",
+      "prompt": "党的十一届三中全会是划时代的，党的十八届三中全会也是划时代的。",
+      "options": [
+        {
+          "label": "T",
+          "text": "正确"
+        },
+        {
+          "label": "F",
+          "text": "错误"
+        }
+      ],
+      "answer": "T",
+      "id": "q0077"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 1,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "新发展阶段"
+        },
+        {
+          "label": "B",
+          "text": "新发展理念"
+        },
+        {
+          "label": "C",
+          "text": "新发展格局"
+        },
+        {
+          "label": "D",
+          "text": "高质量发展"
+        }
+      ],
+      "answer": "D",
+      "prompt": "新时代我国经济社会发展的鲜明主题是（ ）",
+      "id": "q0078"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 1,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "新发展阶段"
+        },
+        {
+          "label": "B",
+          "text": "新发展理念"
+        },
+        {
+          "label": "C",
+          "text": "新发展格局"
+        },
+        {
+          "label": "D",
+          "text": "高质量发展"
+        }
+      ],
+      "answer": "D",
+      "prompt": "新时代我国经济社会发展的鲜明主题是（ ）",
+      "id": "q0079"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 2,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "坚持党的全面领导"
+        },
+        {
+          "label": "B",
+          "text": "团结奋斗"
+        },
+        {
+          "label": "C",
+          "text": "贯彻新发展理念"
+        },
+        {
+          "label": "D",
+          "text": "中国特色社会主义"
+        }
+      ],
+      "answer": "C",
+      "prompt": "（ ）是新时代我国发展壮大的必由之路",
+      "id": "q0080"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 2,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "坚持党的全面领导"
+        },
+        {
+          "label": "B",
+          "text": "团结奋斗"
+        },
+        {
+          "label": "C",
+          "text": "贯彻新发展理念"
+        },
+        {
+          "label": "D",
+          "text": "中国特色社会主义"
+        }
+      ],
+      "answer": "C",
+      "prompt": "（ ）是新时代我国发展壮大的必由之路",
+      "id": "q0081"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 3,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "创新发展"
+        },
+        {
+          "label": "B",
+          "text": "协调发展"
+        },
+        {
+          "label": "C",
+          "text": "绿色发展"
+        },
+        {
+          "label": "D",
+          "text": "共享发展"
+        }
+      ],
+      "answer": "A",
+      "prompt": "新发展理念中，（ ）注重的是解决发展动力问题",
+      "id": "q0082"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 3,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "创新发展"
+        },
+        {
+          "label": "B",
+          "text": "协调发展"
+        },
+        {
+          "label": "C",
+          "text": "绿色发展"
+        },
+        {
+          "label": "D",
+          "text": "共享发展"
+        }
+      ],
+      "answer": "A",
+      "prompt": "新发展理念中，（ ）注重的是解决发展动力问题",
+      "id": "q0083"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 4,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "创新发展"
+        },
+        {
+          "label": "B",
+          "text": "协调发展"
+        },
+        {
+          "label": "C",
+          "text": "绿色发展"
+        },
+        {
+          "label": "D",
+          "text": "共享发展"
+        }
+      ],
+      "answer": "B",
+      "prompt": "新发展理念中，（ ）注重的是解决发展不平衡问题",
+      "id": "q0084"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 4,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "创新发展"
+        },
+        {
+          "label": "B",
+          "text": "协调发展"
+        },
+        {
+          "label": "C",
+          "text": "绿色发展"
+        },
+        {
+          "label": "D",
+          "text": "共享发展"
+        }
+      ],
+      "answer": "B",
+      "prompt": "新发展理念中，（ ）注重的是解决发展不平衡问题",
+      "id": "q0085"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 5,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "创新发展"
+        },
+        {
+          "label": "B",
+          "text": "协调发展"
+        },
+        {
+          "label": "C",
+          "text": "绿色发展"
+        },
+        {
+          "label": "D",
+          "text": "共享发展"
+        }
+      ],
+      "answer": "C",
+      "prompt": "新发展理念中，（ ）注重的是解决人与自然和谐共生问题",
+      "id": "q0086"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 5,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "创新发展"
+        },
+        {
+          "label": "B",
+          "text": "协调发展"
+        },
+        {
+          "label": "C",
+          "text": "绿色发展"
+        },
+        {
+          "label": "D",
+          "text": "共享发展"
+        }
+      ],
+      "answer": "C",
+      "prompt": "新发展理念中，（ ）注重的是解决人与自然和谐共生问题",
+      "id": "q0087"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 6,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "创新发展"
+        },
+        {
+          "label": "B",
+          "text": "协调发展"
+        },
+        {
+          "label": "C",
+          "text": "开放发展"
+        },
+        {
+          "label": "D",
+          "text": "共享发展"
+        }
+      ],
+      "answer": "C",
+      "prompt": "新发展理念中，（ ）注重的是解决发展内外联动问题",
+      "id": "q0088"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 6,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "创新发展"
+        },
+        {
+          "label": "B",
+          "text": "协调发展"
+        },
+        {
+          "label": "C",
+          "text": "开放发展"
+        },
+        {
+          "label": "D",
+          "text": "共享发展"
+        }
+      ],
+      "answer": "C",
+      "prompt": "新发展理念中，（ ）注重的是解决发展内外联动问题",
+      "id": "q0089"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 7,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "创新发展"
+        },
+        {
+          "label": "B",
+          "text": "协调发展"
+        },
+        {
+          "label": "C",
+          "text": "开放发展"
+        },
+        {
+          "label": "D",
+          "text": "共享发展"
+        }
+      ],
+      "answer": "D",
+      "prompt": "新发展理念中，（ ）注重的是解决社会公平正义问题",
+      "id": "q0090"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 7,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "创新发展"
+        },
+        {
+          "label": "B",
+          "text": "协调发展"
+        },
+        {
+          "label": "C",
+          "text": "开放发展"
+        },
+        {
+          "label": "D",
+          "text": "共享发展"
+        }
+      ],
+      "answer": "D",
+      "prompt": "新发展理念中，（ ）注重的是解决社会公平正义问题",
+      "id": "q0091"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 8,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "农民富裕是总要求"
+        },
+        {
+          "label": "B",
+          "text": "农业农村现代化是总目标"
+        },
+        {
+          "label": "C",
+          "text": "坚持农业农村优先发展是总方针"
+        },
+        {
+          "label": "D",
+          "text": "建立健全城乡融合发展体制机制和政策体系是制度保障"
+        }
+      ],
+      "answer": "A",
+      "prompt": "关于乡村振兴战略，下列说法不正确的是（ ）",
+      "id": "q0092"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 8,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "农民富裕是总要求"
+        },
+        {
+          "label": "B",
+          "text": "农业农村现代化是总目标"
+        },
+        {
+          "label": "C",
+          "text": "坚持农业农村优先发展是总方针"
+        },
+        {
+          "label": "D",
+          "text": "建立健全城乡融合发展体制机制和政策体系是制度保障"
+        }
+      ],
+      "answer": "A",
+      "prompt": "关于乡村振兴战略，下列说法不正确的是（ ）",
+      "id": "q0093"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 1,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "增长速度换挡期"
+        },
+        {
+          "label": "B",
+          "text": "结构调整阵痛期"
+        },
+        {
+          "label": "C",
+          "text": "前期刺激政策消化期"
+        },
+        {
+          "label": "D",
+          "text": "重要战略机遇期"
+        }
+      ],
+      "answer": "ABC",
+      "prompt": "针对国际金融危机后世界经济低迷、我国经济下行压力加大，提出我国发展正处在（ ）“三期叠加”阶段，进入新常态。",
+      "id": "q0094"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 1,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "增长速度换挡期"
+        },
+        {
+          "label": "B",
+          "text": "结构调整阵痛期"
+        },
+        {
+          "label": "C",
+          "text": "前期刺激政策消化期"
+        },
+        {
+          "label": "D",
+          "text": "重要战略机遇期"
+        }
+      ],
+      "answer": "ABC",
+      "prompt": "针对国际金融危机后世界经济低迷、我国经济下行压力加大，提出我国发展正处在（ ）“三期叠加”阶段，进入新常态。",
+      "id": "q0095"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 2,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "我国社会主义初级阶段历史进程中的一个重要阶段"
+        },
+        {
+          "label": "B",
+          "text": "中国共产党带领人民迎来从站起来、富起来到强起来历史性跨越的新阶段"
+        },
+        {
+          "label": "C",
+          "text": "全面建成小康社会、实现第一个百年奋斗目标的重要阶段"
+        },
+        {
+          "label": "D",
+          "text": "全面建设社会主义现代化国家、向第二个百年奋斗目标进军的重要阶段"
+        }
+      ],
+      "answer": "ABD",
+      "prompt": "新发展阶段是（ ）",
+      "id": "q0096"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 2,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "我国社会主义初级阶段历史进程中的一个重要阶段"
+        },
+        {
+          "label": "B",
+          "text": "中国共产党带领人民迎来从站起来、富起来到强起来历史性跨越的新阶段"
+        },
+        {
+          "label": "C",
+          "text": "全面建成小康社会、实现第一个百年奋斗目标的重要阶段"
+        },
+        {
+          "label": "D",
+          "text": "全面建设社会主义现代化国家、向第二个百年奋斗目标进军的重要阶段"
+        }
+      ],
+      "answer": "ABD",
+      "prompt": "新发展阶段是（ ）",
+      "id": "q0097"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 3,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "高质量发展为全面建设社会主义现代化国家提供更为坚实的物质基础"
+        },
+        {
+          "label": "B",
+          "text": "高质量发展是不断满足人民对美好生活需要的重要保证"
+        },
+        {
+          "label": "C",
+          "text": "高质量发展是维护国家长治久安的必然要求"
+        },
+        {
+          "label": "D",
+          "text": "高质量发展是全面建成小康社会的必由之路"
+        }
+      ],
+      "answer": "ABC",
+      "prompt": "高质量发展关系我国社会主义现代化建设全局，具有重大战略意义，包括（ ）",
+      "id": "q0098"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 3,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "高质量发展为全面建设社会主义现代化国家提供更为坚实的物质基础"
+        },
+        {
+          "label": "B",
+          "text": "高质量发展是不断满足人民对美好生活需要的重要保证"
+        },
+        {
+          "label": "C",
+          "text": "高质量发展是维护国家长治久安的必然要求"
+        },
+        {
+          "label": "D",
+          "text": "高质量发展是全面建成小康社会的必由之路"
+        }
+      ],
+      "answer": "ABC",
+      "prompt": "高质量发展关系我国社会主义现代化建设全局，具有重大战略意义，包括（ ）",
+      "id": "q0099"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 4,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "毫不动摇巩固和发展公有制经济"
+        },
+        {
+          "label": "B",
+          "text": "毫不动摇坚持按劳分配为主体、多种分配方式并存"
+        },
+        {
+          "label": "C",
+          "text": "毫不动摇坚持社会主义市场经济体制"
+        },
+        {
+          "label": "D",
+          "text": "毫不动摇鼓励、支持、引导非公有制经济发展"
+        }
+      ],
+      "answer": "AD",
+      "prompt": "坚持“两个毫不动摇”是指（ ）",
+      "id": "q0100"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 4,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "毫不动摇巩固和发展公有制经济"
+        },
+        {
+          "label": "B",
+          "text": "毫不动摇坚持按劳分配为主体、多种分配方式并存"
+        },
+        {
+          "label": "C",
+          "text": "毫不动摇坚持社会主义市场经济体制"
+        },
+        {
+          "label": "D",
+          "text": "毫不动摇鼓励、支持、引导非公有制经济发展"
+        }
+      ],
+      "answer": "AD",
+      "prompt": "坚持“两个毫不动摇”是指（ ）",
+      "id": "q0101"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 5,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "以国际大循环为主体"
+        },
+        {
+          "label": "B",
+          "text": "以国内大循环为主体"
+        },
+        {
+          "label": "C",
+          "text": "国内国际双循环相互促进"
+        },
+        {
+          "label": "D",
+          "text": "国内国际双循环独立运行"
+        }
+      ],
+      "answer": "BC",
+      "prompt": "构建（ ）的新发展格局",
+      "id": "q0102"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 5,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "以国际大循环为主体"
+        },
+        {
+          "label": "B",
+          "text": "以国内大循环为主体"
+        },
+        {
+          "label": "C",
+          "text": "国内国际双循环相互促进"
+        },
+        {
+          "label": "D",
+          "text": "国内国际双循环独立运行"
+        }
+      ],
+      "answer": "BC",
+      "prompt": "构建（ ）的新发展格局",
+      "id": "q0103"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 1,
+      "type": "judge",
+      "prompt": "高质量发展是全面建设社会主义现代化国家的首要任务，是遵循经济规律发展的必然要求。",
+      "options": [
+        {
+          "label": "T",
+          "text": "正确"
+        },
+        {
+          "label": "F",
+          "text": "错误"
+        }
+      ],
+      "answer": "T",
+      "id": "q0104"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 1,
+      "type": "judge",
+      "prompt": "高质量发展是全面建设社会主义现代化国家的首要任务，是遵循经济规律发展的必然要求。",
+      "options": [
+        {
+          "label": "T",
+          "text": "正确"
+        },
+        {
+          "label": "F",
+          "text": "错误"
+        }
+      ],
+      "answer": "T",
+      "id": "q0105"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 2,
+      "type": "judge",
+      "prompt": "公有制经济包括国有经济和集体经济，还包括混合所有制经济中的国有成分和集体成分。",
+      "options": [
+        {
+          "label": "T",
+          "text": "正确"
+        },
+        {
+          "label": "F",
+          "text": "错误"
+        }
+      ],
+      "answer": "T",
+      "id": "q0106"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 2,
+      "type": "judge",
+      "prompt": "公有制经济包括国有经济和集体经济，还包括混合所有制经济中的国有成分和集体成分。",
+      "options": [
+        {
+          "label": "T",
+          "text": "正确"
+        },
+        {
+          "label": "F",
+          "text": "错误"
+        }
+      ],
+      "answer": "T",
+      "id": "q0107"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 3,
+      "type": "judge",
+      "prompt": "非公有制经济不是社会主义市场经济的组成部分。",
+      "options": [
+        {
+          "label": "T",
+          "text": "正确"
+        },
+        {
+          "label": "F",
+          "text": "错误"
+        }
+      ],
+      "answer": "F",
+      "id": "q0108"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 3,
+      "type": "judge",
+      "prompt": "非公有制经济不是社会主义市场经济的组成部分。",
+      "options": [
+        {
+          "label": "T",
+          "text": "正确"
+        },
+        {
+          "label": "F",
+          "text": "错误"
+        }
+      ],
+      "answer": "F",
+      "id": "q0109"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 4,
+      "type": "judge",
+      "prompt": "以习近平同志为核心的党中央提出使市场在资源配置中起决定性作用，更好发挥政府作用。",
+      "options": [
+        {
+          "label": "T",
+          "text": "正确"
+        },
+        {
+          "label": "F",
+          "text": "错误"
+        }
+      ],
+      "answer": "T",
+      "id": "q0110"
+    },
+    {
+      "chapter": "第六章推动高质量发展",
+      "chapterOrder": 6,
+      "number": 4,
+      "type": "judge",
+      "prompt": "以习近平同志为核心的党中央提出使市场在资源配置中起决定性作用，更好发挥政府作用。",
+      "options": [
+        {
+          "label": "T",
+          "text": "正确"
+        },
+        {
+          "label": "F",
+          "text": "错误"
+        }
+      ],
+      "answer": "T",
+      "id": "q0111"
+    },
+    {
+      "chapter": "第七章 社会主义现代化建设的",
+      "chapterOrder": 7,
+      "number": 1,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "教育强国"
+        },
+        {
+          "label": "B",
+          "text": "科技强国"
+        },
+        {
+          "label": "C",
+          "text": "人才强国"
+        },
+        {
+          "label": "D",
+          "text": "经济强国"
+        }
+      ],
+      "answer": "A",
+      "prompt": "建设（ ）是全面建成社会主义现代化强国的战略先导，是实现高水平科技自立自强的重要支撑，是促进全体人民共同富裕的有效途径，是以中国式现代化全面推进中华民族伟大复兴的基础工程。",
+      "id": "q0112"
+    },
+    {
+      "chapter": "第七章 社会主义现代化建设的",
+      "chapterOrder": 7,
+      "number": 2,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "培养什么人"
+        },
+        {
+          "label": "B",
+          "text": "怎样培养人"
+        },
+        {
+          "label": "C",
+          "text": "为谁培养人"
+        },
+        {
+          "label": "D",
+          "text": "谁来培养人"
+        }
+      ],
+      "answer": "B",
+      "prompt": "坚持系统思维，整体规划育人各个环节，整合利用各种资源，统筹协调各方力量，发挥家庭、学校、社会协同育人机制的作用，实现全员育人、全过程育人、全方位育人，属于着力解决好（ ）的问题。",
+      "id": "q0113"
+    },
+    {
+      "chapter": "第七章 社会主义现代化建设的",
+      "chapterOrder": 7,
+      "number": 3,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "为党育人"
+        },
+        {
+          "label": "B",
+          "text": "为国育才"
+        },
+        {
+          "label": "C",
+          "text": "人民满意"
+        },
+        {
+          "label": "D",
+          "text": "学生成才"
+        }
+      ],
+      "answer": "C",
+      "prompt": "（ ）是发展教育的根本尺度。",
+      "id": "q0114"
+    },
+    {
+      "chapter": "第七章 社会主义现代化建设的",
+      "chapterOrder": 7,
+      "number": 4,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "关键核心技术必须掌握在自己手中"
+        },
+        {
+          "label": "B",
+          "text": "必须深入推进科技体制改革"
+        },
+        {
+          "label": "C",
+          "text": "发挥新型举国体制优势开展科技攻关"
+        },
+        {
+          "label": "D",
+          "text": "大力发展实体经济"
+        }
+      ],
+      "answer": "D",
+      "prompt": "打赢关键核心技术攻坚战，下列说法错误的是（ ）",
+      "id": "q0115"
+    },
+    {
+      "chapter": "第七章 社会主义现代化建设的",
+      "chapterOrder": 7,
+      "number": 5,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "科技"
+        },
+        {
+          "label": "B",
+          "text": "教育"
+        },
+        {
+          "label": "C",
+          "text": "人才"
+        },
+        {
+          "label": "D",
+          "text": "文化"
+        }
+      ],
+      "answer": "C",
+      "prompt": "信息化、知识经济和创新驱动的时代，（ ）已经成为推动社会发展最活跃、最积极的因素。",
+      "id": "q0116"
+    },
+    {
+      "chapter": "第七章 社会主义现代化建设的",
+      "chapterOrder": 7,
+      "number": 1,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "教育是根本"
+        },
+        {
+          "label": "B",
+          "text": "科技是关键"
+        },
+        {
+          "label": "C",
+          "text": "人才是基础"
+        },
+        {
+          "label": "D",
+          "text": "科技是根本"
+        }
+      ],
+      "answer": "ABC",
+      "prompt": "全面建设社会主义现代化国家（ ）",
+      "id": "q0117"
+    },
+    {
+      "chapter": "第七章 社会主义现代化建设的",
+      "chapterOrder": 7,
+      "number": 2,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "培养什么人"
+        },
+        {
+          "label": "B",
+          "text": "怎样培养人"
+        },
+        {
+          "label": "C",
+          "text": "为谁培养人"
+        },
+        {
+          "label": "D",
+          "text": "谁来培养人"
+        }
+      ],
+      "answer": "ABC",
+      "prompt": "落实立德树人根本任务，必须着力解决好（ ）的问题，这是教育的根本问题。",
+      "id": "q0118"
+    },
+    {
+      "chapter": "第七章 社会主义现代化建设的",
+      "chapterOrder": 7,
+      "number": 3,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "全员育人"
+        },
+        {
+          "label": "B",
+          "text": "全过程育人"
+        },
+        {
+          "label": "C",
+          "text": "全方位育人。"
+        },
+        {
+          "label": "D",
+          "text": "全环节育人"
+        }
+      ],
+      "answer": "ABC",
+      "prompt": "着力解决好怎样培养人的问题。坚持系统思维，整体规划育人各个环节，整合利用各种资源，统筹协调各方力量，发挥家庭、学校、社会协同育人机制的作用，实现（ ）",
+      "id": "q0119"
+    },
+    {
+      "chapter": "第七章 社会主义现代化建设的",
+      "chapterOrder": 7,
+      "number": 4,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "大力促进教育公平"
+        },
+        {
+          "label": "B",
+          "text": "加快建设高质量教育体系"
+        },
+        {
+          "label": "C",
+          "text": "提升教育服务经济社会发展能力"
+        },
+        {
+          "label": "D",
+          "text": "坚持深化教育改革创新"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "办好人民满意的教育，要（ ）",
+      "id": "q0120"
+    },
+    {
+      "chapter": "第七章 社会主义现代化建设的",
+      "chapterOrder": 7,
+      "number": 5,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "国家强盛和民族复兴的战略基石"
+        },
+        {
+          "label": "B",
+          "text": "应对风险挑战和维护国家利益的必然选择"
+        },
+        {
+          "label": "C",
+          "text": "构建新发展格局、推动高质量发展、满足人民美好生活需要的内在要求"
+        },
+        {
+          "label": "D",
+          "text": "推动有效市场和有为政府更好结合的重要举措"
+        }
+      ],
+      "answer": "ABC",
+      "prompt": "实现高水平科技自立自强是（ ）",
+      "id": "q0121"
+    },
+    {
+      "chapter": "第七章 社会主义现代化建设的",
+      "chapterOrder": 7,
+      "number": 1,
+      "type": "judge",
+      "prompt": "建设教育强国、科技强国、人才强国具有内在一致性和相互支撑性。",
+      "options": [
+        {
+          "label": "T",
+          "text": "正确"
+        },
+        {
+          "label": "F",
+          "text": "错误"
+        }
+      ],
+      "answer": "T",
+      "id": "q0122"
+    },
+    {
+      "chapter": "第七章 社会主义现代化建设的",
+      "chapterOrder": 7,
+      "number": 3,
+      "type": "judge",
+      "prompt": "人才是人力资源中能力和素质较高的劳动者，在国家发展中具有重要战略地位。",
+      "options": [
+        {
+          "label": "T",
+          "text": "正确"
+        },
+        {
+          "label": "F",
+          "text": "错误"
+        }
+      ],
+      "answer": "T",
+      "id": "q0123"
+    },
+    {
+      "chapter": "第八章发展全过程人民民主",
+      "chapterOrder": 8,
+      "number": 1,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "人民代表大会制度"
+        },
+        {
+          "label": "B",
+          "text": "中国共产党领导的多党合作和政治协商制度"
+        },
+        {
+          "label": "C",
+          "text": "民族区域自治制度"
+        },
+        {
+          "label": "D",
+          "text": "基层群众自治制度"
+        }
+      ],
+      "answer": "A",
+      "prompt": "我国的根本政治制度是（ ）",
+      "id": "q0124"
+    },
+    {
+      "chapter": "第八章发展全过程人民民主",
+      "chapterOrder": 8,
+      "number": 2,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "选举民主"
+        },
+        {
+          "label": "B",
+          "text": "协商民主"
+        },
+        {
+          "label": "C",
+          "text": "谈判民主"
+        },
+        {
+          "label": "D",
+          "text": "代议民主"
+        }
+      ],
+      "answer": "B",
+      "prompt": "在中国共产党领导下，人民内部各方面围绕改革发展稳定重大问题和涉及群众切身利益的实际问题，在决策之前和决策实施之中开展广泛协商，努力形成共识的重要民主形式是（ ）",
+      "id": "q0125"
+    },
+    {
+      "chapter": "第八章发展全过程人民民主",
+      "chapterOrder": 8,
+      "number": 3,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "民主党派成员"
+        },
+        {
+          "label": "B",
+          "text": "无党派人士"
+        },
+        {
+          "label": "C",
+          "text": "少数民族人士"
+        },
+        {
+          "label": "D",
+          "text": "妇女"
+        }
+      ],
+      "answer": "D",
+      "prompt": "统一战线工作范围不包括（ ）",
+      "id": "q0126"
+    },
+    {
+      "chapter": "第八章发展全过程人民民主",
+      "chapterOrder": 8,
+      "number": 1,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "过程民主和成果民主相统一"
+        },
+        {
+          "label": "B",
+          "text": "程序民主和实质民主相统一"
+        },
+        {
+          "label": "C",
+          "text": "直接民主和间接民主相统一"
+        },
+        {
+          "label": "D",
+          "text": "人民民主和国家意志相统一"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "关于全过程人民民主，是（ ）",
+      "id": "q0127"
+    },
+    {
+      "chapter": "第八章发展全过程人民民主",
+      "chapterOrder": 8,
+      "number": 2,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "党的领导是人民当家作主和依法治国的根本保证"
+        },
+        {
+          "label": "B",
+          "text": "人民当家作主是社会主义民主政治的本质特征"
+        },
+        {
+          "label": "C",
+          "text": "依法治国是党领导人民治理国家的基本方式"
+        },
+        {
+          "label": "D",
+          "text": "三者统一于我国社会主义民主政治的伟大创造"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "走中国特色社会主义政治发展道路，必须坚持党的领导、人民当家作主、依法治国的有机统一。关于三者关系，下列说法正确的是（ ）",
+      "id": "q0128"
+    },
+    {
+      "chapter": "第八章发展全过程人民民主",
+      "chapterOrder": 8,
+      "number": 3,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "全链条的民主"
+        },
+        {
+          "label": "B",
+          "text": "全方位的民主"
+        },
+        {
+          "label": "C",
+          "text": "全周期的民主"
+        },
+        {
+          "label": "D",
+          "text": "全覆盖的民主"
+        }
+      ],
+      "answer": "ABD",
+      "prompt": "全过程人民民主是（ ）",
+      "id": "q0129"
+    },
+    {
+      "chapter": "第八章发展全过程人民民主",
+      "chapterOrder": 8,
+      "number": 4,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "最广泛、"
+        },
+        {
+          "label": "B",
+          "text": "最通行"
+        },
+        {
+          "label": "C",
+          "text": "最真实"
+        },
+        {
+          "label": "D",
+          "text": "最管用"
+        }
+      ],
+      "answer": "ACD",
+      "prompt": "全过程人民民主是社会主义民主政治的本质属性，是（ ）的民主。",
+      "id": "q0130"
+    },
+    {
+      "chapter": "第八章发展全过程人民民主",
+      "chapterOrder": 8,
+      "number": 5,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "人民代表大会制度"
+        },
+        {
+          "label": "B",
+          "text": "中国共产党领导的多党合作和政治协商制度"
+        },
+        {
+          "label": "C",
+          "text": "民族区域自治制度"
+        },
+        {
+          "label": "D",
+          "text": "基层群众自治制度"
+        }
+      ],
+      "answer": "BCD",
+      "prompt": "我国的基本政治制度包括（ ）",
+      "id": "q0131"
+    },
+    {
+      "chapter": "第八章发展全过程人民民主",
+      "chapterOrder": 8,
+      "number": 6,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "以村民委员会为组织形态的农村村民自治"
+        },
+        {
+          "label": "B",
+          "text": "以社区居民委员会为组织形态的城市居民自治"
+        },
+        {
+          "label": "C",
+          "text": "以职工代表大会为组织依托的企事业单位职工自治"
+        },
+        {
+          "label": "D",
+          "text": "以人民团体协商为协商平台的民主"
+        }
+      ],
+      "answer": "ABC",
+      "prompt": "我国基层民主的形式包括（ ）",
+      "id": "q0132"
+    },
+    {
+      "chapter": "第八章发展全过程人民民主",
+      "chapterOrder": 8,
+      "number": 1,
+      "type": "judge",
+      "prompt": "全过程人民民主是社会主义民主政治的本质属性。",
+      "options": [
+        {
+          "label": "T",
+          "text": "正确"
+        },
+        {
+          "label": "F",
+          "text": "错误"
+        }
+      ],
+      "answer": "T",
+      "id": "q0133"
+    },
+    {
+      "chapter": "第八章发展全过程人民民主",
+      "chapterOrder": 8,
+      "number": 2,
+      "type": "judge",
+      "prompt": "统一战线是中国共产党夺取革命、建设、改革事业胜利的的强大法宝。",
+      "options": [
+        {
+          "label": "T",
+          "text": "正确"
+        },
+        {
+          "label": "F",
+          "text": "错误"
+        }
+      ],
+      "answer": "T",
+      "id": "q0134"
+    },
+    {
+      "chapter": "第八章发展全过程人民民主",
+      "chapterOrder": 8,
+      "number": 3,
+      "type": "judge",
+      "prompt": "民族团结是我国各族人民的生命线，中华民族共同体意识是民族团结之本。",
+      "options": [
+        {
+          "label": "T",
+          "text": "正确"
+        },
+        {
+          "label": "F",
+          "text": "错误"
+        }
+      ],
+      "answer": "T",
+      "id": "q0135"
+    },
+    {
+      "chapter": "第八章发展全过程人民民主",
+      "chapterOrder": 8,
+      "number": 4,
+      "type": "judge",
+      "prompt": "协商民主是实践全过程人民民主的重要形式。",
+      "options": [
+        {
+          "label": "T",
+          "text": "正确"
+        },
+        {
+          "label": "F",
+          "text": "错误"
+        }
+      ],
+      "answer": "T",
+      "id": "q0136"
+    },
+    {
+      "chapter": "第八章发展全过程人民民主",
+      "chapterOrder": 8,
+      "number": 5,
+      "type": "judge",
+      "prompt": "协商民主是中国社会主义民主政治中独特的、独有的、独到的民主形式。",
+      "options": [
+        {
+          "label": "T",
+          "text": "正确"
+        },
+        {
+          "label": "F",
+          "text": "错误"
+        }
+      ],
+      "answer": "T",
+      "id": "q0137"
+    },
+    {
+      "chapter": "第十章建设社会主义文化强国",
+      "chapterOrder": 10,
+      "number": 1,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "习近平经济思想"
+        },
+        {
+          "label": "B",
+          "text": "习近平文化思想"
+        },
+        {
+          "label": "C",
+          "text": "习近平宣传文化思想"
+        },
+        {
+          "label": "D",
+          "text": "习近平生态文明思想"
+        }
+      ],
+      "answer": "B",
+      "prompt": "2023年10月7日至8日，全国宣传思想文化工作会议在北京召开。会议最重要的成果就是首次提出了（ ）",
+      "id": "q0138"
+    },
+    {
+      "chapter": "第十章建设社会主义文化强国",
+      "chapterOrder": 10,
+      "number": 2,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "中华优秀传统文化"
+        },
+        {
+          "label": "B",
+          "text": "革命文化"
+        },
+        {
+          "label": "C",
+          "text": "社会主义先进文化"
+        },
+        {
+          "label": "D",
+          "text": "中国特色社会主义伟大实践"
+        }
+      ],
+      "answer": "A",
+      "prompt": "我们坚定文化自信的深厚基础源自于（ ）",
+      "id": "q0139"
+    },
+    {
+      "chapter": "第十章建设社会主义文化强国",
+      "chapterOrder": 10,
+      "number": 3,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "坚持中国特色社会主义法治发展道路"
+        },
+        {
+          "label": "B",
+          "text": "坚持中国特色社会主义政治发展道路"
+        },
+        {
+          "label": "C",
+          "text": "坚持中国特色社会主义文化发展道路"
+        },
+        {
+          "label": "D",
+          "text": "坚持中国特色社会主义生态发展道路"
+        }
+      ],
+      "answer": "C",
+      "prompt": "（ ）是推动社会主义文化繁荣兴盛的唯一正确道路。",
+      "id": "q0140"
+    },
+    {
+      "chapter": "第十章建设社会主义文化强国",
+      "chapterOrder": 10,
+      "number": 4,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "根本制度"
+        },
+        {
+          "label": "B",
+          "text": "基本制度"
+        },
+        {
+          "label": "C",
+          "text": "重要制度"
+        },
+        {
+          "label": "D",
+          "text": "其它制度"
+        }
+      ],
+      "answer": "A",
+      "prompt": "坚持马克思主义在意识形态领域指导地位的制度是中国特色社会主义制度体系的一项（ ）",
+      "id": "q0141"
+    },
+    {
+      "chapter": "第十章建设社会主义文化强国",
+      "chapterOrder": 10,
+      "number": 5,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "①②③④⑤⑥"
+        },
+        {
+          "label": "B",
+          "text": "①②③④⑤"
+        },
+        {
+          "label": "C",
+          "text": "①②④⑤⑥"
+        },
+        {
+          "label": "D",
+          "text": "①②③⑤⑥"
+        }
+      ],
+      "answer": "D",
+      "prompt": "传承发展中华优秀传统文化，要深刻把握中华文明的突出特性。下列属于中华文明的突出特性的是（ ） ①连续性 ②创新性 ③统一性 ④多样性 ⑤包容性 ⑥和平性",
+      "id": "q0142"
+    },
+    {
+      "chapter": "第十章建设社会主义文化强国",
+      "chapterOrder": 10,
+      "number": 6,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "国际传播能力"
+        },
+        {
+          "label": "B",
+          "text": "国家的综合国力"
+        },
+        {
+          "label": "C",
+          "text": "核心价值观的生命力、凝聚力、感召力"
+        },
+        {
+          "label": "D",
+          "text": "国际话语权"
+        }
+      ],
+      "answer": "C",
+      "prompt": "一个国家的文化软实力，从根本上说，取决于其（ ）",
+      "id": "q0143"
+    },
+    {
+      "chapter": "第十章建设社会主义文化强国",
+      "chapterOrder": 10,
+      "number": 1,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "文化繁荣兴盛是实现中华民族伟大复兴的精神支撑"
+        },
+        {
+          "label": "B",
+          "text": "文化繁荣兴盛是建设社会主义现代化强国的应有之义"
+        },
+        {
+          "label": "C",
+          "text": "文化繁荣兴盛是满足人民日益增长的美好生活需要的内在要求"
+        },
+        {
+          "label": "D",
+          "text": "文化繁荣兴盛是世界文化激荡中站稳脚跟的前提基础"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "文化繁荣兴盛是实现中华民族伟大复兴的必然要求，是因为（ ）",
+      "id": "q0144"
+    },
+    {
+      "chapter": "第十章建设社会主义文化强国",
+      "chapterOrder": 10,
+      "number": 2,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "加强马克思主义理论学习宣传教育"
+        },
+        {
+          "label": "B",
+          "text": "深化马克思主义理论研究和建设"
+        },
+        {
+          "label": "C",
+          "text": "加快构建中国特色哲学社会科学"
+        },
+        {
+          "label": "D",
+          "text": "坚持“二为”方向、“双百”方针"
+        }
+      ],
+      "answer": "ABC",
+      "prompt": "大力加强马克思主义理论建设，要（ ），为党和国家事业发展提供坚实的思想保证、精神力量和理论支撑。",
+      "id": "q0145"
+    },
+    {
+      "chapter": "第十章建设社会主义文化强国",
+      "chapterOrder": 10,
+      "number": 3,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "坚持真理、坚守理想"
+        },
+        {
+          "label": "B",
+          "text": "践行初心、担当使命"
+        },
+        {
+          "label": "C",
+          "text": "不怕牺牲、英勇斗争"
+        },
+        {
+          "label": "D",
+          "text": "对党忠诚、不负人民"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "100多年前，中国共产党的先驱们创建了中国共产党，形成了（ ）的伟大建党精神。",
+      "id": "q0146"
+    },
+    {
+      "chapter": "第十章建设社会主义文化强国",
+      "chapterOrder": 10,
+      "number": 4,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "脱贫攻坚精神"
+        },
+        {
+          "label": "B",
+          "text": "抗疫精神"
+        },
+        {
+          "label": "C",
+          "text": "载人航天精神"
+        },
+        {
+          "label": "D",
+          "text": "探月精神"
+        }
+      ],
+      "answer": "ABD",
+      "prompt": "下列中国共产党人精神谱系中，属于中国特色社会主义进入新时代铸就的伟大精神的有（ ）",
+      "id": "q0147"
+    },
+    {
+      "chapter": "第十章建设社会主义文化强国",
+      "chapterOrder": 10,
+      "number": 5,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "创造性转化，就是要按照时代的新进步新进展，对中华优秀传统文化的内涵加以补充、拓展、完善，增强其影响力和感召力。"
+        },
+        {
+          "label": "B",
+          "text": "创造性转化，就是要按照时代特点和要求，对那些至今仍有借鉴价值的内涵和陈旧的表现形式加以改造，赋予其新的时代内涵和现代表达形式，激活其生命力。"
+        },
+        {
+          "label": "C",
+          "text": "创新性发展，就是要按照时代的新进步新进展，对中华优秀传统文化的内涵加以补充、拓展、完善，增强其影响力和感召力。"
+        },
+        {
+          "label": "D",
+          "text": "创新性发展，就是要按照时代特点和要求，对那些至今仍有借鉴价值的内涵和陈旧的表现形式加以改造，赋予其新的时代内涵和现代表达形式，激活其生命力。"
+        }
+      ],
+      "answer": "BC",
+      "prompt": "传承发展中华优秀传统文化，要推动中华优秀传统文化创造性转化、创新性发展。下列说法正确的是（ ）",
+      "id": "q0148"
+    },
+    {
+      "chapter": "第十章建设社会主义文化强国",
+      "chapterOrder": 10,
+      "number": 1,
+      "type": "judge",
+      "prompt": "文化自信是更基础、更广泛、更深厚的自信，是一个国家、一个民族发展中最基本、最深沉、最持久的力量。",
+      "options": [
+        {
+          "label": "T",
+          "text": "正确"
+        },
+        {
+          "label": "F",
+          "text": "错误"
+        }
+      ],
+      "answer": "T",
+      "id": "q0149"
+    },
+    {
+      "chapter": "第十章建设社会主义文化强国",
+      "chapterOrder": 10,
+      "number": 2,
+      "type": "judge",
+      "prompt": "坚持马克思主义在意识形态领域指导地位的根本制度，是坚持和巩固我国社会主义制度、保证我国文化建设正确方向的必然要求。",
+      "options": [
+        {
+          "label": "T",
+          "text": "正确"
+        },
+        {
+          "label": "F",
+          "text": "错误"
+        }
+      ],
+      "answer": "T",
+      "id": "q0150"
+    },
+    {
+      "chapter": "第十章建设社会主义文化强国",
+      "chapterOrder": 10,
+      "number": 3,
+      "type": "judge",
+      "prompt": "新闻舆论工作有鲜明的意识形态属性，坚持正确的政治方向是做好新闻舆论工作的第一位要求。",
+      "options": [
+        {
+          "label": "T",
+          "text": "正确"
+        },
+        {
+          "label": "F",
+          "text": "错误"
+        }
+      ],
+      "answer": "T",
+      "id": "q0151"
+    },
+    {
+      "chapter": "第十一章 以保障和改善民生为重点加强社会建设",
+      "chapterOrder": 11,
+      "number": 1,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "中国共产党领导"
+        },
+        {
+          "label": "B",
+          "text": "社会主义本质"
+        },
+        {
+          "label": "C",
+          "text": "中国特色社会主义制度"
+        },
+        {
+          "label": "D",
+          "text": "以人民为中心"
+        }
+      ],
+      "answer": "D",
+      "prompt": "党的十八大以来，以习近平同志为核心的党中央坚持（ ）的发展思想,在发展中保障和改善民生，加强和创新社会治理，人民生活全方位改善,人民获得感幸福感安全感不断增强。",
+      "id": "q0152"
+    },
+    {
+      "chapter": "第十一章 以保障和改善民生为重点加强社会建设",
+      "chapterOrder": 11,
+      "number": 2,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "中华民族伟大复兴"
+        },
+        {
+          "label": "B",
+          "text": "增进民生福祉"
+        },
+        {
+          "label": "C",
+          "text": "共同富裕"
+        },
+        {
+          "label": "D",
+          "text": "民生"
+        }
+      ],
+      "answer": "B",
+      "prompt": "（ ）是坚持立党为公、执政为民的本质要求。",
+      "id": "q0153"
+    },
+    {
+      "chapter": "第十一章 以保障和改善民生为重点加强社会建设",
+      "chapterOrder": 11,
+      "number": 3,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "社会"
+        },
+        {
+          "label": "B",
+          "text": "人"
+        },
+        {
+          "label": "C",
+          "text": "公民"
+        },
+        {
+          "label": "D",
+          "text": "经济"
+        }
+      ],
+      "answer": "B",
+      "prompt": "关注（ ）本身的发展，是社会主义和资本主义的根本区别之一。",
+      "id": "q0154"
+    },
+    {
+      "chapter": "第十一章 以保障和改善民生为重点加强社会建设",
+      "chapterOrder": 11,
+      "number": 4,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "坚定社会主义制度"
+        },
+        {
+          "label": "B",
+          "text": "推进社会主义发展"
+        },
+        {
+          "label": "C",
+          "text": "增进民生福祉"
+        },
+        {
+          "label": "D",
+          "text": "坚持人民主体地位"
+        }
+      ],
+      "answer": "C",
+      "prompt": "中国式现代化是造福人民的现代化，要求把不断（ ）放在更加突出的位置。",
+      "id": "q0155"
+    },
+    {
+      "chapter": "第十一章 以保障和改善民生为重点加强社会建设",
+      "chapterOrder": 11,
+      "number": 5,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "人民幸福"
+        },
+        {
+          "label": "B",
+          "text": "共同富裕"
+        },
+        {
+          "label": "C",
+          "text": "乡村振兴"
+        },
+        {
+          "label": "D",
+          "text": "打赢脱贫攻坚战"
+        }
+      ],
+      "answer": "D",
+      "prompt": "（ ），消除绝对贫困，是全面建成小康社会的底线任务,是必须抓紧抓好的第一民生工程。",
+      "id": "q0156"
+    },
+    {
+      "chapter": "第十一章 以保障和改善民生为重点加强社会建设",
+      "chapterOrder": 11,
+      "number": 6,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "保障"
+        },
+        {
+          "label": "B",
+          "text": "扶贫"
+        },
+        {
+          "label": "C",
+          "text": "创新"
+        },
+        {
+          "label": "D",
+          "text": "发展"
+        }
+      ],
+      "answer": "D",
+      "prompt": "（ ）是解决民生问题的“总钥匙”。",
+      "id": "q0157"
+    },
+    {
+      "chapter": "第十一章 以保障和改善民生为重点加强社会建设",
+      "chapterOrder": 11,
+      "number": 7,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "收入分配"
+        },
+        {
+          "label": "B",
+          "text": "分配制度"
+        },
+        {
+          "label": "C",
+          "text": "社会保障"
+        },
+        {
+          "label": "D",
+          "text": "生活幸福"
+        }
+      ],
+      "answer": "A",
+      "prompt": "（ ）是民生之源，是改善民生、实现发展成果由人民共享最重要最直接的方式。",
+      "id": "q0158"
+    },
+    {
+      "chapter": "第十一章 以保障和改善民生为重点加强社会建设",
+      "chapterOrder": 11,
+      "number": 8,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "经济制度"
+        },
+        {
+          "label": "B",
+          "text": "分配制度"
+        },
+        {
+          "label": "C",
+          "text": "社会制度"
+        },
+        {
+          "label": "D",
+          "text": "政治制度"
+        }
+      ],
+      "answer": "B",
+      "prompt": "（ ）是促进共同富裕的基础性制度。",
+      "id": "q0159"
+    },
+    {
+      "chapter": "第十一章 以保障和改善民生为重点加强社会建设",
+      "chapterOrder": 11,
+      "number": 9,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "社会保障"
+        },
+        {
+          "label": "B",
+          "text": "教育"
+        },
+        {
+          "label": "C",
+          "text": "就业"
+        },
+        {
+          "label": "D",
+          "text": "医疗"
+        }
+      ],
+      "answer": "C",
+      "prompt": "（ ）是最基本的民生，是劳动者赖以生存和发展的基础、共享经济发展成果的基本条件，关系到亿万劳动者及其家庭的切身利益。",
+      "id": "q0160"
+    },
+    {
+      "chapter": "第十一章 以保障和改善民生为重点加强社会建设",
+      "chapterOrder": 11,
+      "number": 10,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "改善民生"
+        },
+        {
+          "label": "B",
+          "text": "社会保障体系"
+        },
+        {
+          "label": "C",
+          "text": "人民健康"
+        },
+        {
+          "label": "D",
+          "text": "就业"
+        }
+      ],
+      "answer": "C",
+      "prompt": "（ ）是社会文明进步的基础，是民族昌盛和国家富强的重要标志，是促进人的全面发展的必然要求。",
+      "id": "q0161"
+    },
+    {
+      "chapter": "第十一章 以保障和改善民生为重点加强社会建设",
+      "chapterOrder": 11,
+      "number": 11,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "党的十八大"
+        },
+        {
+          "label": "B",
+          "text": "党的十八届三中全会"
+        },
+        {
+          "label": "C",
+          "text": "党的十九届六中全会"
+        },
+        {
+          "label": "D",
+          "text": "党的二十大"
+        }
+      ],
+      "answer": "B",
+      "prompt": "（ ）提出创新社会治理体制，从“社会管理”到“社会治理”，虽然只是一字之差，却意味着社会建设理念、体制和方式的重大变革。",
+      "id": "q0162"
+    },
+    {
+      "chapter": "第十一章 以保障和改善民生为重点加强社会建设",
+      "chapterOrder": 11,
+      "number": 12,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "改善民生"
+        },
+        {
+          "label": "B",
+          "text": "人民当家作主"
+        },
+        {
+          "label": "C",
+          "text": "基层治理"
+        },
+        {
+          "label": "D",
+          "text": "为人民服务"
+        }
+      ],
+      "answer": "C",
+      "prompt": "（ ）是国家治理的基石，城乡社区是社会治理最基本的单元，是党和政府联系、服务居民群众的“最后一公里”。",
+      "id": "q0163"
+    },
+    {
+      "chapter": "第十一章 以保障和改善民生为重点加强社会建设",
+      "chapterOrder": 11,
+      "number": 13,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "科学实效"
+        },
+        {
+          "label": "B",
+          "text": "系统化专业化"
+        },
+        {
+          "label": "C",
+          "text": "共建共治共享"
+        },
+        {
+          "label": "D",
+          "text": "创新协调发展"
+        }
+      ],
+      "answer": "C",
+      "prompt": "理念是完善社会治理体系的先导，必须坚持（ ）的社会治理理念。",
+      "id": "q0164"
+    },
+    {
+      "chapter": "第十一章 以保障和改善民生为重点加强社会建设",
+      "chapterOrder": 11,
+      "number": 14,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "政府机构"
+        },
+        {
+          "label": "B",
+          "text": "居民社区"
+        },
+        {
+          "label": "C",
+          "text": "基层党组织"
+        },
+        {
+          "label": "D",
+          "text": "中国共产党"
+        }
+      ],
+      "answer": "C",
+      "prompt": "充分发挥（ ）领导核心作用，把党的领导贯穿社会治理全过程各环节。",
+      "id": "q0165"
+    },
+    {
+      "chapter": "第十一章 以保障和改善民生为重点加强社会建设",
+      "chapterOrder": 11,
+      "number": 15,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "市域社会治理"
+        },
+        {
+          "label": "B",
+          "text": "改善人民生活"
+        },
+        {
+          "label": "C",
+          "text": "基层党组织"
+        },
+        {
+          "label": "D",
+          "text": "政府机构"
+        }
+      ],
+      "answer": "A",
+      "prompt": "社区社会治理成效很大程度取决于（ ）能力和水平。",
+      "id": "q0166"
+    },
+    {
+      "chapter": "第十一章 以保障和改善民生为重点加强社会建设",
+      "chapterOrder": 11,
+      "number": 1,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "解决发展问题"
+        },
+        {
+          "label": "B",
+          "text": "改善民生"
+        },
+        {
+          "label": "C",
+          "text": "满足人民生活"
+        },
+        {
+          "label": "D",
+          "text": "促进精神文明建设"
+        }
+      ],
+      "answer": "AB",
+      "prompt": "民生工作离老百姓最近，同老百姓生活最密切，（ ）是我们的第一要务。",
+      "id": "q0167"
+    },
+    {
+      "chapter": "第十一章 以保障和改善民生为重点加强社会建设",
+      "chapterOrder": 11,
+      "number": 2,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "坚守底线"
+        },
+        {
+          "label": "B",
+          "text": "突出重点"
+        },
+        {
+          "label": "C",
+          "text": "完善制度"
+        },
+        {
+          "label": "D",
+          "text": "引导预期"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "（ ），是保障和改善民生的工作思路。",
+      "id": "q0168"
+    },
+    {
+      "chapter": "第十一章 以保障和改善民生为重点加强社会建设",
+      "chapterOrder": 11,
+      "number": 3,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "坚持社会主义原则"
+        },
+        {
+          "label": "B",
+          "text": "立足中国实际"
+        },
+        {
+          "label": "C",
+          "text": "总结我国社会保障实践经验"
+        },
+        {
+          "label": "D",
+          "text": "学习借鉴国外有益经验"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "中国特色的社会保障体系，是在（ ）基础上建立起来的。",
+      "id": "q0169"
+    },
+    {
+      "chapter": "第十一章 以保障和改善民生为重点加强社会建设",
+      "chapterOrder": 11,
+      "number": 4,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "系统治理"
+        },
+        {
+          "label": "B",
+          "text": "依法治理"
+        },
+        {
+          "label": "C",
+          "text": "综合治理"
+        },
+        {
+          "label": "D",
+          "text": "源头治理"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "新时代加强和创新社会治理，要求坚持（ ），探索一条符合中国社会发展实际、更可持续的中国特色社会主义社会治理之路。",
+      "id": "q0170"
+    },
+    {
+      "chapter": "第十一章 以保障和改善民生为重点加强社会建设",
+      "chapterOrder": 11,
+      "number": 5,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "法律制度"
+        },
+        {
+          "label": "B",
+          "text": "法律思维"
+        },
+        {
+          "label": "C",
+          "text": "法治思维"
+        },
+        {
+          "label": "D",
+          "text": "法治方式"
+        }
+      ],
+      "answer": "CD",
+      "prompt": "运用（ ）统筹社会力量、平衡社会利益、调节社会关系、规范社会行为、化解社会矛盾。",
+      "id": "q0171"
+    },
+    {
+      "chapter": "第十二章 建设社会主义生态文明",
+      "chapterOrder": 12,
+      "number": 1,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "生态文明建设"
+        },
+        {
+          "label": "B",
+          "text": "保护环境"
+        },
+        {
+          "label": "C",
+          "text": "绿色低碳"
+        },
+        {
+          "label": "D",
+          "text": "生物多样性"
+        }
+      ],
+      "answer": "A",
+      "prompt": "（ ）是关系中华民族永续发展的根本大计。",
+      "id": "q0172"
+    },
+    {
+      "chapter": "第十二章 建设社会主义生态文明",
+      "chapterOrder": 12,
+      "number": 2,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "农业文明"
+        },
+        {
+          "label": "B",
+          "text": "生态文明"
+        },
+        {
+          "label": "C",
+          "text": "政治文明"
+        },
+        {
+          "label": "D",
+          "text": "人类文明"
+        }
+      ],
+      "answer": "B",
+      "prompt": "（ ）是工业文明发展到一定阶段的产物，是人类社会进步的重大成果。",
+      "id": "q0173"
+    },
+    {
+      "chapter": "第十二章 建设社会主义生态文明",
+      "chapterOrder": 12,
+      "number": 3,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "天地与我并生"
+        },
+        {
+          "label": "B",
+          "text": "我思故我在"
+        },
+        {
+          "label": "C",
+          "text": "而万物与我为一"
+        },
+        {
+          "label": "D",
+          "text": "天人合一"
+        }
+      ],
+      "answer": "B",
+      "prompt": "以下思不是中华文明的鲜明特色和独特标识的是（ ）",
+      "id": "q0174"
+    },
+    {
+      "chapter": "第十二章 建设社会主义生态文明",
+      "chapterOrder": 12,
+      "number": 4,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "生态文明建设"
+        },
+        {
+          "label": "B",
+          "text": "山水林田湖草沙治理"
+        },
+        {
+          "label": "C",
+          "text": "绿水青山就是金山银山"
+        },
+        {
+          "label": "D",
+          "text": "人与自然和谐共生"
+        }
+      ],
+      "answer": "C",
+      "prompt": "（ ），这是重要的发展理念，也是推进现代化建设的重大原则。",
+      "id": "q0175"
+    },
+    {
+      "chapter": "第十二章 建设社会主义生态文明",
+      "chapterOrder": 12,
+      "number": 5,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "生活环境"
+        },
+        {
+          "label": "B",
+          "text": "社会福利"
+        },
+        {
+          "label": "C",
+          "text": "土地"
+        },
+        {
+          "label": "D",
+          "text": "良好的生态环境"
+        }
+      ],
+      "answer": "D",
+      "prompt": "习近平指出：“（ ）是最公平的公共产品，是最普惠的民生福祉。”",
+      "id": "q0176"
+    },
+    {
+      "chapter": "第十二章 建设社会主义生态文明",
+      "chapterOrder": 12,
+      "number": 6,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "党的十八大"
+        },
+        {
+          "label": "B",
+          "text": "党的十八届三中全会"
+        },
+        {
+          "label": "C",
+          "text": "党的十九大"
+        },
+        {
+          "label": "D",
+          "text": "党的二十大"
+        }
+      ],
+      "answer": "C",
+      "prompt": "（ ）把“增强绿水青山就是金山银山的意识”等写入党章。",
+      "id": "q0177"
+    },
+    {
+      "chapter": "第十二章 建设社会主义生态文明",
+      "chapterOrder": 12,
+      "number": 7,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "建设美丽中国"
+        },
+        {
+          "label": "B",
+          "text": "生态文明建设"
+        },
+        {
+          "label": "C",
+          "text": "绿水青山就是金山银山"
+        },
+        {
+          "label": "D",
+          "text": "建设美丽世界"
+        }
+      ],
+      "answer": "A",
+      "prompt": "（ ），是全面建设社会主义现代化国家的重要目标，也是满足人民日益增长的优美生态环境需要的必然要求。",
+      "id": "q0178"
+    },
+    {
+      "chapter": "第十二章 建设社会主义生态文明",
+      "chapterOrder": 12,
+      "number": 8,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "生态环境保护"
+        },
+        {
+          "label": "B",
+          "text": "人与自然和谐共生"
+        },
+        {
+          "label": "C",
+          "text": "生物多样性"
+        },
+        {
+          "label": "D",
+          "text": "美丽中国建设"
+        }
+      ],
+      "answer": "B",
+      "prompt": "习近平指出：“绿色发展，就其要义来讲，是要解决好（ ）问题。”",
+      "id": "q0179"
+    },
+    {
+      "chapter": "第十二章 建设社会主义生态文明",
+      "chapterOrder": 12,
+      "number": 9,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "原始森林"
+        },
+        {
+          "label": "B",
+          "text": "名山大川"
+        },
+        {
+          "label": "C",
+          "text": "国家公园"
+        },
+        {
+          "label": "D",
+          "text": "生态环境"
+        }
+      ],
+      "answer": "C",
+      "prompt": "科学划定自然保护地保护范围及功能分区，构建以（ ）为主体、自然保护区为基础、各类自然公园为补充的自然保护地体系。",
+      "id": "q0180"
+    },
+    {
+      "chapter": "第十二章 建设社会主义生态文明",
+      "chapterOrder": 12,
+      "number": 10,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "监督"
+        },
+        {
+          "label": "B",
+          "text": "保障"
+        },
+        {
+          "label": "C",
+          "text": "真抓"
+        },
+        {
+          "label": "D",
+          "text": "执行"
+        }
+      ],
+      "answer": "C",
+      "prompt": "制度的生命力在于执行，关键在（ ），靠的是严管。",
+      "id": "q0181"
+    },
+    {
+      "chapter": "第十二章 建设社会主义生态文明",
+      "chapterOrder": 12,
+      "number": 11,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "2025年"
+        },
+        {
+          "label": "B",
+          "text": "2030年"
+        },
+        {
+          "label": "C",
+          "text": "2045年"
+        },
+        {
+          "label": "D",
+          "text": "2050年"
+        }
+      ],
+      "answer": "B",
+      "prompt": "要站在对人类文明负责的高度，秉持共商共建共享的全球治理观，携手应对气候变化、海洋污染、生物保护等全球性环境问题，实现联合国（ ）可持续发展目标，扎实推动全球生态文明之路行稳致远。",
+      "id": "q0182"
+    },
+    {
+      "chapter": "第十二章 建设社会主义生态文明",
+      "chapterOrder": 12,
+      "number": 12,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "命运与共"
+        },
+        {
+          "label": "B",
+          "text": "携手合作"
+        },
+        {
+          "label": "C",
+          "text": "多元共治"
+        },
+        {
+          "label": "D",
+          "text": "美丽世界"
+        }
+      ],
+      "answer": "C",
+      "prompt": "应对生态环境挑战，必须摒弃“单边主义”“极端利己主义”“甩锅推责”，打造（ ）的全球生态治理体系。",
+      "id": "q0183"
+    },
+    {
+      "chapter": "第十二章 建设社会主义生态文明",
+      "chapterOrder": 12,
+      "number": 13,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "人类生存"
+        },
+        {
+          "label": "B",
+          "text": "粮食安全"
+        },
+        {
+          "label": "C",
+          "text": "气候变化"
+        },
+        {
+          "label": "D",
+          "text": "生态破坏"
+        }
+      ],
+      "answer": "C",
+      "prompt": "（ ）问题是全球生态环境治理领域的突出问题，是全人类共同面临的重大挑战。",
+      "id": "q0184"
+    },
+    {
+      "chapter": "第十二章 建设社会主义生态文明",
+      "chapterOrder": 12,
+      "number": 14,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "2035年"
+        },
+        {
+          "label": "B",
+          "text": "2045年"
+        },
+        {
+          "label": "C",
+          "text": "2050年"
+        },
+        {
+          "label": "D",
+          "text": "2060年"
+        }
+      ],
+      "answer": "D",
+      "prompt": "中国提前完成2020年应对气候变化和设立自然保护区相关目标，……力争2030年前实现碳达峰，努力争取（ ）前实现碳中和。",
+      "id": "q0185"
+    },
+    {
+      "chapter": "第十二章 建设社会主义生态文明",
+      "chapterOrder": 12,
+      "number": 15,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "十五"
+        },
+        {
+          "label": "B",
+          "text": "十七"
+        },
+        {
+          "label": "C",
+          "text": "十八"
+        },
+        {
+          "label": "D",
+          "text": "二十"
+        }
+      ],
+      "answer": "A",
+      "prompt": "中国成功承办联合国《生物多样性公约》第（ ）次缔约方大会，推动国际社会达成“昆明一蒙特利尔全球生物多样性框架”等一揽子具有里程碑意义的成果,为全球生物多样性治理确定了目标、明确了途径。",
+      "id": "q0186"
+    },
+    {
+      "chapter": "第十二章 建设社会主义生态文明",
+      "chapterOrder": 12,
+      "number": 1,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "尊重自然"
+        },
+        {
+          "label": "B",
+          "text": "顺应自然"
+        },
+        {
+          "label": "C",
+          "text": "保护自然"
+        },
+        {
+          "label": "D",
+          "text": "融入自然"
+        }
+      ],
+      "answer": "ABC",
+      "prompt": "大自然是人类赖以生存发展的基本条件，（ ）是全面建设社会主义现代化国家的内在要求。",
+      "id": "q0187"
+    },
+    {
+      "chapter": "第十二章 建设社会主义生态文明",
+      "chapterOrder": 12,
+      "number": 2,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "经济发展方式"
+        },
+        {
+          "label": "B",
+          "text": "生活方式"
+        },
+        {
+          "label": "C",
+          "text": "社会发展方式"
+        },
+        {
+          "label": "D",
+          "text": "教育方式"
+        }
+      ],
+      "answer": "AB",
+      "prompt": "生态环境问题归根到底是（ ）问题。",
+      "id": "q0188"
+    },
+    {
+      "chapter": "第十二章 建设社会主义生态文明",
+      "chapterOrder": 12,
+      "number": 3,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "自然财富"
+        },
+        {
+          "label": "B",
+          "text": "生态财富"
+        },
+        {
+          "label": "C",
+          "text": "社会财富"
+        },
+        {
+          "label": "D",
+          "text": "经济财富"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "绿水青山既是（ ），又是（ ）。",
+      "id": "q0189"
+    },
+    {
+      "chapter": "第十二章 建设社会主义生态文明",
+      "chapterOrder": 12,
+      "number": 4,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "生态农业"
+        },
+        {
+          "label": "B",
+          "text": "生态工业"
+        },
+        {
+          "label": "C",
+          "text": "生态交通"
+        },
+        {
+          "label": "D",
+          "text": "生态旅游"
+        }
+      ],
+      "answer": "ABD",
+      "prompt": "坚持生态优先、绿色发展，把生态环境优势转化为（ ）等生态经济优势，绿水青山就变成了金山银山。",
+      "id": "q0190"
+    },
+    {
+      "chapter": "第十二章 建设社会主义生态文明",
+      "chapterOrder": 12,
+      "number": 5,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "生态保护红线"
+        },
+        {
+          "label": "B",
+          "text": "环境质量底线"
+        },
+        {
+          "label": "C",
+          "text": "国土规划红线"
+        },
+        {
+          "label": "D",
+          "text": "资源利用上线"
+        }
+      ],
+      "answer": "ABD",
+      "prompt": "优化国土空间开发布局，严守（ ）三条红线，以国家重点生态功能区为支撑，实施全国重要生态系统保护和修复重大工程，筑牢国家生态安全屏障。",
+      "id": "q0191"
+    },
+    {
+      "chapter": "第十二章 建设社会主义生态文明",
+      "chapterOrder": 12,
+      "number": 6,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "资源过度开发"
+        },
+        {
+          "label": "B",
+          "text": "粗放利用"
+        },
+        {
+          "label": "C",
+          "text": "奢侈消费"
+        },
+        {
+          "label": "D",
+          "text": "生态腐败"
+        }
+      ],
+      "answer": "ABC",
+      "prompt": "生态环境问题，归根到底是（ ）造成的。",
+      "id": "q0192"
+    },
+    {
+      "chapter": "第十二章 建设社会主义生态文明",
+      "chapterOrder": 12,
+      "number": 7,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "生态保护红线"
+        },
+        {
+          "label": "B",
+          "text": "永久基本农田"
+        },
+        {
+          "label": "C",
+          "text": "环境科学治理"
+        },
+        {
+          "label": "D",
+          "text": "城镇开发边界"
+        }
+      ],
+      "answer": "ABD",
+      "prompt": "强化国土空间规划和用途管控，划定落实（ ）三条控制线以及各类海域保护线。",
+      "id": "q0193"
+    },
+    {
+      "chapter": "第十二章 建设社会主义生态文明",
+      "chapterOrder": 12,
+      "number": 8,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "水资源"
+        },
+        {
+          "label": "B",
+          "text": "水环境"
+        },
+        {
+          "label": "C",
+          "text": "水生态"
+        },
+        {
+          "label": "D",
+          "text": "水安全"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "统筹（ ）,加强河流和湿地生态流量管理。",
+      "id": "q0194"
+    },
+    {
+      "chapter": "第十二章 建设社会主义生态文明",
+      "chapterOrder": 12,
+      "number": 9,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "源头预防"
+        },
+        {
+          "label": "B",
+          "text": "过程控制"
+        },
+        {
+          "label": "C",
+          "text": "损害赔偿"
+        },
+        {
+          "label": "D",
+          "text": "责任追究"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "健全（ ）的生态环境保护体系。",
+      "id": "q0195"
+    },
+    {
+      "chapter": "第十二章 建设社会主义生态文明",
+      "chapterOrder": 12,
+      "number": 10,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "生态文明理念"
+        },
+        {
+          "label": "B",
+          "text": "以绿色转型为驱动"
+        },
+        {
+          "label": "C",
+          "text": "以人民福祉为中心"
+        },
+        {
+          "label": "D",
+          "text": "以国际法为基础"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "继续促进可持续发展，把一个清洁美丽的世界留给子孙后代，需要国际社会加强合作，秉持（ ），共建地球生命共同体，共建清洁美丽世界，书写人与自然和谐共生的美好画卷。",
+      "id": "q0196"
+    },
+    {
+      "chapter": "第十三章 维护和塑造国家安全",
+      "chapterOrder": 13,
+      "number": 1,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "国家安全"
+        },
+        {
+          "label": "B",
+          "text": "保护环境"
+        },
+        {
+          "label": "C",
+          "text": "经济发展"
+        },
+        {
+          "label": "D",
+          "text": "社会和谐"
+        }
+      ],
+      "answer": "A",
+      "prompt": "习近平指出：“实现中华民族伟大复兴的中国梦，保证人民安居乐业，（ ）是头等大事。”",
+      "id": "q0197"
+    },
+    {
+      "chapter": "第十三章 维护和塑造国家安全",
+      "chapterOrder": 13,
+      "number": 2,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "2013年5月15日"
+        },
+        {
+          "label": "B",
+          "text": "2014年4月15日"
+        },
+        {
+          "label": "C",
+          "text": "2017年4月15日"
+        },
+        {
+          "label": "D",
+          "text": "2018年5月15日"
+        }
+      ],
+      "answer": "B",
+      "prompt": "（ ）,习近平在中央国家安全委员会第一次会议上首次提出总体国家安全观，强调必须坚持总体国家安全观，走出一条中国特色国家安全道路。",
+      "id": "q0198"
+    },
+    {
+      "chapter": "第十三章 维护和塑造国家安全",
+      "chapterOrder": 13,
+      "number": 3,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "政治安全"
+        },
+        {
+          "label": "B",
+          "text": "人民安全"
+        },
+        {
+          "label": "C",
+          "text": "社会安全"
+        },
+        {
+          "label": "D",
+          "text": "经济安全"
+        }
+      ],
+      "answer": "B",
+      "prompt": "总体国家安全观以（ ）为宗旨……",
+      "id": "q0199"
+    },
+    {
+      "chapter": "第十三章 维护和塑造国家安全",
+      "chapterOrder": 13,
+      "number": 4,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "“国家”"
+        },
+        {
+          "label": "B",
+          "text": "“安全”"
+        },
+        {
+          "label": "C",
+          "text": "“总体”"
+        },
+        {
+          "label": "D",
+          "text": "意识形态"
+        }
+      ],
+      "answer": "C",
+      "prompt": "总体国家安全观的关键是（ ）。",
+      "id": "q0200"
+    },
+    {
+      "chapter": "第十三章 维护和塑造国家安全",
+      "chapterOrder": 13,
+      "number": 5,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "宪法"
+        },
+        {
+          "label": "B",
+          "text": "反分裂国家法"
+        },
+        {
+          "label": "C",
+          "text": "国际安全法"
+        },
+        {
+          "label": "D",
+          "text": "国家安全法"
+        }
+      ],
+      "answer": "D",
+      "prompt": "国家安全法律制度体系加快形成，以（ ）为引领，制定出台国家情报法、反恐怖主义法、境外非政府组织境内活动管理法、反间谍法、网络安全法、核安全法、数据安全法等一系列国家安全法律法规。",
+      "id": "q0201"
+    },
+    {
+      "chapter": "第十三章 维护和塑造国家安全",
+      "chapterOrder": 13,
+      "number": 6,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "人民安全"
+        },
+        {
+          "label": "B",
+          "text": "政治安全"
+        },
+        {
+          "label": "C",
+          "text": "经济安全"
+        },
+        {
+          "label": "D",
+          "text": "国土安全"
+        }
+      ],
+      "answer": "B",
+      "prompt": "要坚定不移走中国特色国家安全道路，统筹发展和安全，把维护（ ）放在首要位置，守好重点领域国家安全的主阵地、主战场，加快构建统筹各领域安全的新安全格局。",
+      "id": "q0202"
+    },
+    {
+      "chapter": "第十三章 维护和塑造国家安全",
+      "chapterOrder": 13,
+      "number": 7,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "党的十八届四中全会"
+        },
+        {
+          "label": "B",
+          "text": "党的十九大"
+        },
+        {
+          "label": "C",
+          "text": "党的十九届六中全会"
+        },
+        {
+          "label": "D",
+          "text": "党的二十大"
+        }
+      ],
+      "answer": "D",
+      "prompt": "（ ）强调“统筹发展和安全”，并将其写入党章。",
+      "id": "q0203"
+    },
+    {
+      "chapter": "第十三章 维护和塑造国家安全",
+      "chapterOrder": 13,
+      "number": 8,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "人民安全"
+        },
+        {
+          "label": "B",
+          "text": "政治安全"
+        },
+        {
+          "label": "C",
+          "text": "经济安全"
+        },
+        {
+          "label": "D",
+          "text": "军事安全"
+        }
+      ],
+      "answer": "B",
+      "prompt": "（ ）是国家安全的根本。",
+      "id": "q0204"
+    },
+    {
+      "chapter": "第十三章 维护和塑造国家安全",
+      "chapterOrder": 13,
+      "number": 9,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "人民当家作主"
+        },
+        {
+          "label": "B",
+          "text": "社会和谐"
+        },
+        {
+          "label": "C",
+          "text": "党的领导"
+        },
+        {
+          "label": "D",
+          "text": "国家地位"
+        }
+      ],
+      "answer": "C",
+      "prompt": "维护政权安全，就是要毫不动摇坚持和巩固（ ）和长期执政地位。",
+      "id": "q0205"
+    },
+    {
+      "chapter": "第十三章 维护和塑造国家安全",
+      "chapterOrder": 13,
+      "number": 10,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "中国特色社会主义"
+        },
+        {
+          "label": "B",
+          "text": "习近平新时代中国特色社会主义思想"
+        },
+        {
+          "label": "C",
+          "text": "马克思主义"
+        },
+        {
+          "label": "D",
+          "text": "科学社会主义"
+        }
+      ],
+      "answer": "C",
+      "prompt": "维护意识形态安全，就是要毫不动摇坚持和巩固（ ）在意识形态领域的指导地位……",
+      "id": "q0206"
+    },
+    {
+      "chapter": "第十三章 维护和塑造国家安全",
+      "chapterOrder": 13,
+      "number": 11,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "就业"
+        },
+        {
+          "label": "B",
+          "text": "平安"
+        },
+        {
+          "label": "C",
+          "text": "生态"
+        },
+        {
+          "label": "D",
+          "text": "教育"
+        }
+      ],
+      "answer": "B",
+      "prompt": "习近平指出：“（ ）是老百姓解决温饱后的第一需求，是极重要的民生，也是最基本的发展环境。”",
+      "id": "q0207"
+    },
+    {
+      "chapter": "第十三章 维护和塑造国家安全",
+      "chapterOrder": 13,
+      "number": 12,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "构建和谐社会"
+        },
+        {
+          "label": "B",
+          "text": "全面依法治国"
+        },
+        {
+          "label": "C",
+          "text": "人与自然和谐共生"
+        },
+        {
+          "label": "D",
+          "text": "建设平安中国"
+        }
+      ],
+      "answer": "D",
+      "prompt": "（ ），是全面建设社会主义现代化国家的重要内容和重要保障。",
+      "id": "q0208"
+    },
+    {
+      "chapter": "第十三章 维护和塑造国家安全",
+      "chapterOrder": 13,
+      "number": 13,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "人民生活水平提升"
+        },
+        {
+          "label": "B",
+          "text": "社会治理能力现代化"
+        },
+        {
+          "label": "C",
+          "text": "社会更加安全稳定有序"
+        },
+        {
+          "label": "D",
+          "text": "共同富裕"
+        }
+      ],
+      "answer": "C",
+      "prompt": "（ ），是检验更高水平的平安中国建设成效的重要标志。",
+      "id": "q0209"
+    },
+    {
+      "chapter": "第十三章 维护和塑造国家安全",
+      "chapterOrder": 13,
+      "number": 14,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "社会稳定"
+        },
+        {
+          "label": "B",
+          "text": "安居乐业"
+        },
+        {
+          "label": "C",
+          "text": "群众期盼"
+        },
+        {
+          "label": "D",
+          "text": "安全保障"
+        }
+      ],
+      "answer": "C",
+      "prompt": "聚焦保障人民安宁，坚持以（ ）为导向，更快破大案、更多破小案、更准办好案、更好控发案，切实保护人民群众人身权、财产权、人格权。",
+      "id": "q0210"
+    },
+    {
+      "chapter": "第十三章 维护和塑造国家安全",
+      "chapterOrder": 13,
+      "number": 15,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "深化改革"
+        },
+        {
+          "label": "B",
+          "text": "防范化解重大风险"
+        },
+        {
+          "label": "C",
+          "text": "构筑安全屏障"
+        },
+        {
+          "label": "D",
+          "text": "提高社会治理能力"
+        }
+      ],
+      "answer": "A",
+      "prompt": "发展环境越是严峻复杂，越要坚定不移（ ），健全各方面制度，完善治理体系，促进制度建设和治理效能更好转化融合。",
+      "id": "q0211"
+    },
+    {
+      "chapter": "第十四章 建设巩固国防和强大人民军队",
+      "chapterOrder": 14,
+      "number": 1,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "国家安全"
+        },
+        {
+          "label": "B",
+          "text": "习近平强军思想"
+        },
+        {
+          "label": "C",
+          "text": "国防和强大人民军队"
+        },
+        {
+          "label": "D",
+          "text": "综合国力"
+        }
+      ],
+      "answer": "C",
+      "prompt": "巩固（ ）是新时代坚持和发展中国特色社会主义、实现中华民族伟大复兴的战略支撑。",
+      "id": "q0212"
+    },
+    {
+      "chapter": "第十四章 建设巩固国防和强大人民军队",
+      "chapterOrder": 14,
+      "number": 2,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "战争与革命"
+        },
+        {
+          "label": "B",
+          "text": "和平与发展"
+        },
+        {
+          "label": "C",
+          "text": "合作与发展"
+        },
+        {
+          "label": "D",
+          "text": "合作与共赢"
+        }
+      ],
+      "answer": "B",
+      "prompt": "当今世界，（ ）仍然是时代主题，但并不太平。",
+      "id": "q0213"
+    },
+    {
+      "chapter": "第十四章 建设巩固国防和强大人民军队",
+      "chapterOrder": 14,
+      "number": 3,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "警察部队"
+        },
+        {
+          "label": "B",
+          "text": "人民军队"
+        },
+        {
+          "label": "C",
+          "text": "预备役"
+        },
+        {
+          "label": "D",
+          "text": "火箭军"
+        }
+      ],
+      "answer": "B",
+      "prompt": "（ ）是执行党的政治任务的武装集团，党和人民所需就是军队使命任务所系。",
+      "id": "q0214"
+    },
+    {
+      "chapter": "第十四章 建设巩固国防和强大人民军队",
+      "chapterOrder": 14,
+      "number": 4,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "听党指挥"
+        },
+        {
+          "label": "B",
+          "text": "能打胜仗"
+        },
+        {
+          "label": "C",
+          "text": "作风优良"
+        },
+        {
+          "label": "D",
+          "text": "纪律严明"
+        }
+      ],
+      "answer": "A",
+      "prompt": "（ ）是灵魂，决定军队建设的政治方向。",
+      "id": "q0215"
+    },
+    {
+      "chapter": "第十四章 建设巩固国防和强大人民军队",
+      "chapterOrder": 14,
+      "number": 5,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "全心全意为人民服务"
+        },
+        {
+          "label": "B",
+          "text": "强军目标"
+        },
+        {
+          "label": "C",
+          "text": "人民至上"
+        },
+        {
+          "label": "D",
+          "text": "党对人民军队的绝对领导"
+        }
+      ],
+      "answer": "D",
+      "prompt": "坚持（ ）是人民军队永远不变的军魂。",
+      "id": "q0216"
+    },
+    {
+      "chapter": "第十四章 建设巩固国防和强大人民军队",
+      "chapterOrder": 14,
+      "number": 6,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "听党指挥"
+        },
+        {
+          "label": "B",
+          "text": "能打胜仗"
+        },
+        {
+          "label": "C",
+          "text": "作风优良"
+        },
+        {
+          "label": "D",
+          "text": "纪律严明"
+        }
+      ],
+      "answer": "B",
+      "prompt": "（ ）是核心，反映军队的根本职能和军队建设的根本指向。",
+      "id": "q0217"
+    },
+    {
+      "chapter": "第十四章 建设巩固国防和强大人民军队",
+      "chapterOrder": 14,
+      "number": 7,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "听党指挥"
+        },
+        {
+          "label": "B",
+          "text": "能打胜仗"
+        },
+        {
+          "label": "C",
+          "text": "作风优良"
+        },
+        {
+          "label": "D",
+          "text": "纪律严明"
+        }
+      ],
+      "answer": "C",
+      "prompt": "（ ）是保证，关系军队的性质、宗旨、本色。",
+      "id": "q0218"
+    },
+    {
+      "chapter": "第十四章 建设巩固国防和强大人民军队",
+      "chapterOrder": 14,
+      "number": 8,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "2025年"
+        },
+        {
+          "label": "B",
+          "text": "2035年"
+        },
+        {
+          "label": "C",
+          "text": "2045年"
+        },
+        {
+          "label": "D",
+          "text": "本世纪中叶"
+        }
+      ],
+      "answer": "D",
+      "prompt": "党的十九大提出，到（ ）把人民军队全面建成世界一流军队。",
+      "id": "q0219"
+    },
+    {
+      "chapter": "第十四章 建设巩固国防和强大人民军队",
+      "chapterOrder": 14,
+      "number": 9,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "党的十八届三中全会"
+        },
+        {
+          "label": "B",
+          "text": "党的十九大"
+        },
+        {
+          "label": "C",
+          "text": "党的十九届五中全会"
+        },
+        {
+          "label": "D",
+          "text": "党的二十大"
+        }
+      ],
+      "answer": "C",
+      "prompt": "（ ）进一步充实了国防和军队现代化的目标任务和发展步骤，明确提出确保2027年实现建军一百年奋斗目标。",
+      "id": "q0220"
+    },
+    {
+      "chapter": "第十四章 建设巩固国防和强大人民军队",
+      "chapterOrder": 14,
+      "number": 10,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "人民至上"
+        },
+        {
+          "label": "B",
+          "text": "全心全意为人民服务"
+        },
+        {
+          "label": "C",
+          "text": "党对人民军队的绝对领导"
+        },
+        {
+          "label": "D",
+          "text": "作风优良"
+        }
+      ],
+      "answer": "C",
+      "prompt": "坚持（ ），是马克思主义建党建军的一条基本原则。",
+      "id": "q0221"
+    },
+    {
+      "chapter": "第十四章 建设巩固国防和强大人民军队",
+      "chapterOrder": 14,
+      "number": 11,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "党委（支部）统一的集体领导"
+        },
+        {
+          "label": "B",
+          "text": "军委主席负责制"
+        },
+        {
+          "label": "C",
+          "text": "政治委员制"
+        },
+        {
+          "label": "D",
+          "text": "政治机关制"
+        }
+      ],
+      "answer": "B",
+      "prompt": "（ ）是坚持党对人民军队绝对领导的根本制度和根本实现形式，在党领导军队的一整套制度体系中处于最高层次、居于统领地位。",
+      "id": "q0222"
+    },
+    {
+      "chapter": "第十四章 建设巩固国防和强大人民军队",
+      "chapterOrder": 14,
+      "number": 12,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "政治建军"
+        },
+        {
+          "label": "B",
+          "text": "改革强军"
+        },
+        {
+          "label": "C",
+          "text": "科技强军"
+        },
+        {
+          "label": "D",
+          "text": "依法治军"
+        }
+      ],
+      "answer": "A",
+      "prompt": "（ ）是人民军队的立军之本。",
+      "id": "q0223"
+    },
+    {
+      "chapter": "第十四章 建设巩固国防和强大人民军队",
+      "chapterOrder": 14,
+      "number": 13,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "听党指挥"
+        },
+        {
+          "label": "B",
+          "text": "纪律严明"
+        },
+        {
+          "label": "C",
+          "text": "军事训练"
+        },
+        {
+          "label": "D",
+          "text": "科学练兵"
+        }
+      ],
+      "answer": "C",
+      "prompt": "（ ）是提高实战能力的重要途径和抓手，是最直接的军事斗争准备",
+      "id": "q0224"
+    },
+    {
+      "chapter": "第十四章 建设巩固国防和强大人民军队",
+      "chapterOrder": 14,
+      "number": 14,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "军民情深"
+        },
+        {
+          "label": "B",
+          "text": "人民幸福"
+        },
+        {
+          "label": "C",
+          "text": "军政军民团结"
+        },
+        {
+          "label": "D",
+          "text": "民族团结"
+        }
+      ],
+      "answer": "C",
+      "prompt": "（ ）是实现富国和强军相统一的重要政治保障。",
+      "id": "q0225"
+    },
+    {
+      "chapter": "第十四章 建设巩固国防和强大人民军队",
+      "chapterOrder": 14,
+      "number": 15,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "“关键少数”"
+        },
+        {
+          "label": "B",
+          "text": "“总钥匙”"
+        },
+        {
+          "label": "C",
+          "text": "“总开关”"
+        },
+        {
+          "label": "D",
+          "text": "“牛鼻子”"
+        }
+      ],
+      "answer": "A",
+      "prompt": "坚持从严治军铁律，坚持抓住领导干部这个（ ）……",
+      "id": "q0226"
+    },
+    {
+      "chapter": "第十四章 建设巩固国防和强大人民军队",
+      "chapterOrder": 14,
+      "number": 1,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "同我国国际地位相称"
+        },
+        {
+          "label": "B",
+          "text": "同国家安全"
+        },
+        {
+          "label": "C",
+          "text": "同国家富强"
+        },
+        {
+          "label": "D",
+          "text": "同人民幸福"
+        }
+      ],
+      "answer": "AB",
+      "prompt": "建设（ ）和发展利益相适应的巩固国防和强大人民军队，是新时代党和国家事业发展的必然要求。",
+      "id": "q0227"
+    },
+    {
+      "chapter": "第十四章 建设巩固国防和强大人民军队",
+      "chapterOrder": 14,
+      "number": 2,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "坚决听党指挥"
+        },
+        {
+          "label": "B",
+          "text": "坚决保卫社会主义制度"
+        },
+        {
+          "label": "C",
+          "text": "坚决维护国家政权安全"
+        },
+        {
+          "label": "D",
+          "text": "坚决维护政治社会大局稳定"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "人民军队必须坚定站在党的旗帜下,（ ）。",
+      "id": "q0228"
+    },
+    {
+      "chapter": "第十四章 建设巩固国防和强大人民军队",
+      "chapterOrder": 14,
+      "number": 3,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "听党指挥"
+        },
+        {
+          "label": "B",
+          "text": "能打胜仗"
+        },
+        {
+          "label": "C",
+          "text": "作风优良"
+        },
+        {
+          "label": "D",
+          "text": "纪律严明"
+        }
+      ],
+      "answer": "ABC",
+      "prompt": "习近平在2012年12月中央军委扩大会议上提出,走中国特色强军之路,为建设一支（ ）的人民军队而奋斗。",
+      "id": "q0229"
+    },
+    {
+      "chapter": "第十四章 建设巩固国防和强大人民军队",
+      "chapterOrder": 14,
+      "number": 4,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "听党指挥"
+        },
+        {
+          "label": "B",
+          "text": "能打仗"
+        },
+        {
+          "label": "C",
+          "text": "打胜仗"
+        },
+        {
+          "label": "D",
+          "text": "纪律严明"
+        }
+      ],
+      "answer": "BC",
+      "prompt": "（ ）是军队的根本价值所在。",
+      "id": "q0230"
+    },
+    {
+      "chapter": "第十四章 建设巩固国防和强大人民军队",
+      "chapterOrder": 14,
+      "number": 5,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "军事理论现代化"
+        },
+        {
+          "label": "B",
+          "text": "军队组织形态现代化"
+        },
+        {
+          "label": "C",
+          "text": "军事人员现代化"
+        },
+        {
+          "label": "D",
+          "text": "武器装备现代化"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "到2035年基本实现国防和军队现代化。这一步的关键是实现（ ）。",
+      "id": "q0231"
+    },
+    {
+      "chapter": "第十四章 建设巩固国防和强大人民军队",
+      "chapterOrder": 14,
+      "number": 6,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "建军之本"
+        },
+        {
+          "label": "B",
+          "text": "立党之基"
+        },
+        {
+          "label": "C",
+          "text": "执政之源"
+        },
+        {
+          "label": "D",
+          "text": "强军之魂"
+        }
+      ],
+      "answer": "AD",
+      "prompt": "党对人民军队的绝对领导，是（ ）。",
+      "id": "q0232"
+    },
+    {
+      "chapter": "第十四章 建设巩固国防和强大人民军队",
+      "chapterOrder": 14,
+      "number": 7,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "政治建军"
+        },
+        {
+          "label": "B",
+          "text": "改革强军"
+        },
+        {
+          "label": "C",
+          "text": "科技强军"
+        },
+        {
+          "label": "D",
+          "text": "人才强军"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "新的征程上，开创国防和军队现代化新局面，必须全面推进（ ）、依法治军，加快把人民军队建设成为世界一流军队，以更强大的能力、更可靠的手段捍卫国家主权、安全、发展利益。",
+      "id": "q0233"
+    },
+    {
+      "chapter": "第十四章 建设巩固国防和强大人民军队",
+      "chapterOrder": 14,
+      "number": 8,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "政治建军"
+        },
+        {
+          "label": "B",
+          "text": "改革强军"
+        },
+        {
+          "label": "C",
+          "text": "厉行法治"
+        },
+        {
+          "label": "D",
+          "text": "严肃军纪"
+        }
+      ],
+      "answer": "CD",
+      "prompt": "（ ），是治军带兵的铁律，也是建设强大军队的基本规律。",
+      "id": "q0234"
+    },
+    {
+      "chapter": "第十四章 建设巩固国防和强大人民军队",
+      "chapterOrder": 14,
+      "number": 9,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "敢于斗争"
+        },
+        {
+          "label": "B",
+          "text": "敢于胜利"
+        },
+        {
+          "label": "C",
+          "text": "一不怕苦"
+        },
+        {
+          "label": "D",
+          "text": "二不怕死"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "（ ），是人民军队血性胆魄的生动写照。",
+      "id": "q0235"
+    },
+    {
+      "chapter": "第十四章 建设巩固国防和强大人民军队",
+      "chapterOrder": 14,
+      "number": 10,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "不相信有完不成的任务"
+        },
+        {
+          "label": "B",
+          "text": "不相信有克服不了的困难"
+        },
+        {
+          "label": "C",
+          "text": "不相信有攻克不了的堡垒"
+        },
+        {
+          "label": "D",
+          "text": "不相信有战胜不了的敌人"
+        }
+      ],
+      "answer": "ABD",
+      "prompt": "在枪林弹雨的战场上，面对气焰嚣张的强大敌人，人民军队发出了“三个不相信”的英雄宣言：在革命战士面前（ ）！",
+      "id": "q0236"
+    },
+    {
+      "chapter": "第十五章 坚持“一国两制”和推进祖国",
+      "chapterOrder": 15,
+      "number": 5,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "1995年7月1日"
+        },
+        {
+          "label": "B",
+          "text": "1995年9月1日"
+        },
+        {
+          "label": "C",
+          "text": "1996年7月1日"
+        },
+        {
+          "label": "D",
+          "text": "1997年7月1日"
+        }
+      ],
+      "answer": "BBACD",
+      "prompt": "（ ），中国政府恢复对香港行使主权，香港回到了祖国的怀抱。",
+      "id": "q0237"
+    },
+    {
+      "chapter": "第十五章 坚持“一国两制”和推进祖国",
+      "chapterOrder": 15,
+      "number": 10,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "宪法"
+        },
+        {
+          "label": "B",
+          "text": "选举法"
+        },
+        {
+          "label": "C",
+          "text": "立法法"
+        },
+        {
+          "label": "D",
+          "text": "基本法"
+        }
+      ],
+      "answer": "ABDDA",
+      "prompt": "（ ）是国家根本大法，是特别行政区制度的法律渊源。",
+      "id": "q0238"
+    },
+    {
+      "chapter": "第十五章 坚持“一国两制”和推进祖国",
+      "chapterOrder": 15,
+      "number": 15,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "反对干涉内政"
+        },
+        {
+          "label": "B",
+          "text": "“三通”"
+        },
+        {
+          "label": "C",
+          "text": "绝不放弃使用武力"
+        },
+        {
+          "label": "D",
+          "text": "“和平统一、一国两制”"
+        }
+      ],
+      "answer": "CACBD",
+      "prompt": "（ ）方针是实现两岸统一的最佳方式。",
+      "id": "q0239"
+    },
+    {
+      "chapter": "第十五章 坚持“一国两制”和推进祖国",
+      "chapterOrder": 15,
+      "number": 1,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "维护国家主权、安全、发展利益"
+        },
+        {
+          "label": "B",
+          "text": "维护经济社会稳定"
+        },
+        {
+          "label": "C",
+          "text": "保持香港、澳门长期繁荣稳定"
+        },
+        {
+          "label": "D",
+          "text": "保持香港、澳门、台湾稳定，实现祖国统一"
+        }
+      ],
+      "answer": "AC",
+      "prompt": "“一国两制”的根本宗旨是（ ）。",
+      "id": "q0240"
+    },
+    {
+      "chapter": "第十五章 坚持“一国两制”和推进祖国",
+      "chapterOrder": 15,
+      "number": 2,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "前提"
+        },
+        {
+          "label": "B",
+          "text": "基础"
+        },
+        {
+          "label": "C",
+          "text": "条件"
+        },
+        {
+          "label": "D",
+          "text": "目标"
+        }
+      ],
+      "answer": "AB",
+      "prompt": "“一国”是实行“两制”的（ ）。",
+      "id": "q0241"
+    },
+    {
+      "chapter": "第十五章 坚持“一国两制”和推进祖国",
+      "chapterOrder": 15,
+      "number": 3,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "宪法"
+        },
+        {
+          "label": "B",
+          "text": "特别行政区法"
+        },
+        {
+          "label": "C",
+          "text": "基本法"
+        },
+        {
+          "label": "D",
+          "text": "立法管理条例"
+        }
+      ],
+      "answer": "AC",
+      "prompt": "（ ）共同构成特别行政区的宪制基础。",
+      "id": "q0242"
+    },
+    {
+      "chapter": "第十五章 坚持“一国两制”和推进祖国",
+      "chapterOrder": 15,
+      "number": 4,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "行政长官"
+        },
+        {
+          "label": "B",
+          "text": "特别行政区政府"
+        },
+        {
+          "label": "C",
+          "text": "立法会委员"
+        },
+        {
+          "label": "D",
+          "text": "香港市民"
+        }
+      ],
+      "answer": "AB",
+      "prompt": "（ ）是香港的当家人，也是治理香港的第一责任人。",
+      "id": "q0243"
+    },
+    {
+      "chapter": "第十五章 坚持“一国两制”和推进祖国",
+      "chapterOrder": 15,
+      "number": 5,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "一个国家"
+        },
+        {
+          "label": "B",
+          "text": "两种制度"
+        },
+        {
+          "label": "C",
+          "text": "三个关税区"
+        },
+        {
+          "label": "D",
+          "text": "三种货币"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "粤港澳大湾区是在（ ）的条件下建设的，国际上没有先例，需要大胆闯、大胆试，开出一条新路来。",
+      "id": "q0244"
+    },
+    {
+      "chapter": "第十六章 中国特色大国外交和推动构建人类命运共同体",
+      "chapterOrder": 16,
+      "number": 5,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "坚持以人民为中心"
+        },
+        {
+          "label": "B",
+          "text": "坚持合作共赢"
+        },
+        {
+          "label": "C",
+          "text": "构建人类命运共同体"
+        },
+        {
+          "label": "D",
+          "text": "坚持走和平发展道路"
+        }
+      ],
+      "answer": "ABDCD",
+      "prompt": "（ ），是我们党根据时代发展潮流和我国根本利益作出的战略抉择，是新时代中国外交的基本原则。",
+      "id": "q0245"
+    },
+    {
+      "chapter": "第十六章 中国特色大国外交和推动构建人类命运共同体",
+      "chapterOrder": 16,
+      "number": 10,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "全人类的共同价值"
+        },
+        {
+          "label": "B",
+          "text": "全球治理体系的重要抉择"
+        },
+        {
+          "label": "C",
+          "text": "国家社会普遍共识"
+        },
+        {
+          "label": "D",
+          "text": "人类命运共同体的核心内容"
+        }
+      ],
+      "answer": "ABDBA",
+      "prompt": "2015年9月，习近平在出席第七十届联合国大会一般性辩论时明确指出：“和平、发展、公平、正义、民主、自由，是（ ），也是联合国的崇高目标。”",
+      "id": "q0246"
+    },
+    {
+      "chapter": "第十六章 中国特色大国外交和推动构建人类命运共同体",
+      "chapterOrder": 16,
+      "number": 15,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "“金砖国家”"
+        },
+        {
+          "label": "B",
+          "text": "“新兴国家经济体”"
+        },
+        {
+          "label": "C",
+          "text": "“联合国发展战略”"
+        },
+        {
+          "label": "D",
+          "text": "“一带一路”"
+        }
+      ],
+      "answer": "CACBD",
+      "prompt": "共建（ ）是对中国与世界实现开放共赢路径的顶层设计，是推动构建人类命运共同体的实践平台。",
+      "id": "q0247"
+    },
+    {
+      "chapter": "第十六章 中国特色大国外交和推动构建人类命运共同体",
+      "chapterOrder": 16,
+      "number": 1,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "世界之变"
+        },
+        {
+          "label": "B",
+          "text": "时代之变"
+        },
+        {
+          "label": "C",
+          "text": "历史之变"
+        },
+        {
+          "label": "D",
+          "text": "人类之变"
+        }
+      ],
+      "answer": "ABC",
+      "prompt": "（ ）正以前所未有的方式展开,世界百年未有之大变局加速演进，世界进入新的动荡变革期。",
+      "id": "q0248"
+    },
+    {
+      "chapter": "第十六章 中国特色大国外交和推动构建人类命运共同体",
+      "chapterOrder": 16,
+      "number": 2,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "实现国家富强"
+        },
+        {
+          "label": "B",
+          "text": "服务民族复兴"
+        },
+        {
+          "label": "C",
+          "text": "促进人类进步"
+        },
+        {
+          "label": "D",
+          "text": "构建人类命运共同体"
+        }
+      ],
+      "answer": "BC",
+      "prompt": "中国特色大国外交牢牢把握（ ）这条主线。",
+      "id": "q0249"
+    },
+    {
+      "chapter": "第十六章 中国特色大国外交和推动构建人类命运共同体",
+      "chapterOrder": 16,
+      "number": 3,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "中国共产党性质宗旨"
+        },
+        {
+          "label": "B",
+          "text": "中国特色大国外交政策"
+        },
+        {
+          "label": "C",
+          "text": "我国社会主义制度"
+        },
+        {
+          "label": "D",
+          "text": "人民当家作主"
+        }
+      ],
+      "answer": "AC",
+      "prompt": "走和平发展道路是由（ ）决定的。",
+      "id": "q0250"
+    },
+    {
+      "chapter": "第十六章 中国特色大国外交和推动构建人类命运共同体",
+      "chapterOrder": 16,
+      "number": 4,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "“以和为贵”"
+        },
+        {
+          "label": "B",
+          "text": "“和而不同”"
+        },
+        {
+          "label": "C",
+          "text": "“睦邻友邦”"
+        },
+        {
+          "label": "D",
+          "text": "“天下大同”"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "中国自古就有“国虽大，好战必亡”的箴言，（ ）等理念世代相传。",
+      "id": "q0251"
+    },
+    {
+      "chapter": "第十六章 中国特色大国外交和推动构建人类命运共同体",
+      "chapterOrder": 16,
+      "number": 5,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "独立自主"
+        },
+        {
+          "label": "B",
+          "text": "相互尊重"
+        },
+        {
+          "label": "C",
+          "text": "公平正义"
+        },
+        {
+          "label": "D",
+          "text": "合作共赢"
+        }
+      ],
+      "answer": "BCD",
+      "prompt": "推动构建新型国际关系，就是要秉持（ ）原则，走出一条对话而不对抗、结伴而不结盟的国与国交往新路……",
+      "id": "q0252"
+    },
+    {
+      "chapter": "第十六章 中国特色大国外交和推动构建人类命运共同体",
+      "chapterOrder": 16,
+      "number": 6,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "求同存异"
+        },
+        {
+          "label": "B",
+          "text": "相互尊重"
+        },
+        {
+          "label": "C",
+          "text": "互学互鉴"
+        },
+        {
+          "label": "D",
+          "text": "共同发展"
+        }
+      ],
+      "answer": "ABC",
+      "prompt": "秉持（ ）理念，构建新型政党关系。",
+      "id": "q0253"
+    },
+    {
+      "chapter": "第十六章 中国特色大国外交和推动构建人类命运共同体",
+      "chapterOrder": 16,
+      "number": 7,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "“海上丝绸之路经济带”"
+        },
+        {
+          "label": "B",
+          "text": "“丝绸之路经济带”"
+        },
+        {
+          "label": "C",
+          "text": "“21世纪海上丝绸之路”"
+        },
+        {
+          "label": "D",
+          "text": "“海上丝绸之路”"
+        }
+      ],
+      "answer": "BC",
+      "prompt": "2013年，习近平提出了共同建设和的倡议，受到国际社会普遍欢迎。",
+      "id": "q0254"
+    },
+    {
+      "chapter": "第十六章 中国特色大国外交和推动构建人类命运共同体",
+      "chapterOrder": 16,
+      "number": 8,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "开放"
+        },
+        {
+          "label": "B",
+          "text": "绿色"
+        },
+        {
+          "label": "C",
+          "text": "廉洁"
+        },
+        {
+          "label": "D",
+          "text": "高效"
+        }
+      ],
+      "answer": "ABC",
+      "prompt": "共建“一带一路”，秉持共商共建共享原则，坚持、、理念……",
+      "id": "q0255"
+    },
+    {
+      "chapter": "第十六章 中国特色大国外交和推动构建人类命运共同体",
+      "chapterOrder": 16,
+      "number": 9,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "促进基础设施建设和互联互通"
+        },
+        {
+          "label": "B",
+          "text": "加强经济政策协调和发展战略对接"
+        },
+        {
+          "label": "C",
+          "text": "促进协同联动发展"
+        },
+        {
+          "label": "D",
+          "text": "实现共同繁荣"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "“一带一路”倡议的核心内涵，是（ ）。",
+      "id": "q0256"
+    },
+    {
+      "chapter": "第十六章 中国特色大国外交和推动构建人类命运共同体",
+      "chapterOrder": 16,
+      "number": 10,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "公正合理"
+        },
+        {
+          "label": "B",
+          "text": "互商互谅"
+        },
+        {
+          "label": "C",
+          "text": "同舟共济"
+        },
+        {
+          "label": "D",
+          "text": "互利共赢"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "要坚持（ ），携手破解和平赤字、发展赤字、安全赤字、治理赤字，使全球治理体系满足应对全球性挑战的现实需要，顺应和平发展合作共赢的历史趋势。",
+      "id": "q0257"
+    },
+    {
+      "chapter": "第十七章 全面从严治党",
+      "chapterOrder": 17,
+      "number": 5,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "人民当家作主"
+        },
+        {
+          "label": "B",
+          "text": "全面依法治国"
+        },
+        {
+          "label": "C",
+          "text": "党的领导"
+        },
+        {
+          "label": "D",
+          "text": "坚持走和平发展道路"
+        }
+      ],
+      "answer": "ABDAC",
+      "prompt": "（ ）是中国特色社会主义制度的最大优势，是党和国家各项事业发展的根本政治保证。",
+      "id": "q0258"
+    },
+    {
+      "chapter": "第十七章 全面从严治党",
+      "chapterOrder": 17,
+      "number": 10,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "党同人民群众"
+        },
+        {
+          "label": "B",
+          "text": "党内同志"
+        },
+        {
+          "label": "C",
+          "text": "党与非党"
+        },
+        {
+          "label": "D",
+          "text": "党与企业"
+        }
+      ],
+      "answer": "ACDBA",
+      "prompt": "作风问题核心是（ ）的关系问题。",
+      "id": "q0259"
+    },
+    {
+      "chapter": "第十七章 全面从严治党",
+      "chapterOrder": 17,
+      "number": 15,
+      "type": "single",
+      "options": [
+        {
+          "label": "A",
+          "text": "党的领导"
+        },
+        {
+          "label": "B",
+          "text": "走中国特色社会主义道路"
+        },
+        {
+          "label": "C",
+          "text": "人民民主专政"
+        },
+        {
+          "label": "D",
+          "text": "勇于自我革命"
+        }
+      ],
+      "answer": "BABCD",
+      "prompt": "（ ），是中国共产党区别于其他政党的显著标志，也是我们党最大的优势、最鲜明的品格。",
+      "id": "q0260"
+    },
+    {
+      "chapter": "第十七章 全面从严治党",
+      "chapterOrder": 17,
+      "number": 1,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "党要管党"
+        },
+        {
+          "label": "B",
+          "text": "从严治党"
+        },
+        {
+          "label": "C",
+          "text": "自我革命"
+        },
+        {
+          "label": "D",
+          "text": "坚持初心使命"
+        }
+      ],
+      "answer": "AB",
+      "prompt": "（ ），是党的建设的一贯要求和根本方针。",
+      "id": "q0261"
+    },
+    {
+      "chapter": "第十七章 全面从严治党",
+      "chapterOrder": 17,
+      "number": 2,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "加强党的领导"
+        },
+        {
+          "label": "B",
+          "text": "全面"
+        },
+        {
+          "label": "C",
+          "text": "党的自身建设"
+        },
+        {
+          "label": "D",
+          "text": "整体"
+        }
+      ],
+      "answer": "AB",
+      "prompt": "全面从严治党，核心是（ ），基础在（ ），关键在严，要害在治。",
+      "id": "q0262"
+    },
+    {
+      "chapter": "第十七章 全面从严治党",
+      "chapterOrder": 17,
+      "number": 3,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "保证全党服从中央"
+        },
+        {
+          "label": "B",
+          "text": "维护党中央权威和集中统一领导"
+        },
+        {
+          "label": "C",
+          "text": "坚定“四个自信”"
+        },
+        {
+          "label": "D",
+          "text": "旗帜鲜明讲政治"
+        }
+      ],
+      "answer": "AB",
+      "prompt": "（ ），是党的政治建设的首要任务。",
+      "id": "q0263"
+    },
+    {
+      "chapter": "第十七章 全面从严治党",
+      "chapterOrder": 17,
+      "number": 4,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "把准政治方向"
+        },
+        {
+          "label": "B",
+          "text": "站稳政治立场"
+        },
+        {
+          "label": "C",
+          "text": "营造良好政治生态"
+        },
+        {
+          "label": "D",
+          "text": "提高政治能力"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "发挥党的政治建设的统领性作用，必须（ ）。",
+      "id": "q0264"
+    },
+    {
+      "chapter": "第十七章 全面从严治党",
+      "chapterOrder": 17,
+      "number": 5,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "忠诚"
+        },
+        {
+          "label": "B",
+          "text": "干净"
+        },
+        {
+          "label": "C",
+          "text": "担当"
+        },
+        {
+          "label": "D",
+          "text": "务实"
+        }
+      ],
+      "answer": "ABC",
+      "prompt": "（ ）是党对领导干部提出的政治要求。",
+      "id": "q0265"
+    },
+    {
+      "chapter": "第十七章 全面从严治党",
+      "chapterOrder": 17,
+      "number": 6,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "权力制约"
+        },
+        {
+          "label": "B",
+          "text": "制度制约"
+        },
+        {
+          "label": "C",
+          "text": "监督权力"
+        },
+        {
+          "label": "D",
+          "text": "依法监督"
+        }
+      ],
+      "answer": "BC",
+      "prompt": "反腐倡廉的核心是（ ）。",
+      "id": "q0266"
+    },
+    {
+      "chapter": "第十七章 全面从严治党",
+      "chapterOrder": 17,
+      "number": 7,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "自我净化"
+        },
+        {
+          "label": "B",
+          "text": "自我完善"
+        },
+        {
+          "label": "C",
+          "text": "自我革新"
+        },
+        {
+          "label": "D",
+          "text": "自我提高"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "勇于自我革命就要同一切影响党的先进性、弱化党的纯洁性的问题作坚决斗争，实现（ ）。",
+      "id": "q0267"
+    },
+    {
+      "chapter": "第十七章 全面从严治党",
+      "chapterOrder": 17,
+      "number": 8,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "务必不忘初心、牢记使命"
+        },
+        {
+          "label": "B",
+          "text": "务必谦虚谨慎、艰苦奋斗"
+        },
+        {
+          "label": "C",
+          "text": "务必敢于斗争、善于斗争"
+        },
+        {
+          "label": "D",
+          "text": "务必党要管党、从严治党"
+        }
+      ],
+      "answer": "ABC",
+      "prompt": "习近平指出，“全党同志（ ）”。",
+      "id": "q0268"
+    },
+    {
+      "chapter": "第十七章 全面从严治党",
+      "chapterOrder": 17,
+      "number": 9,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "伟大自我革命"
+        },
+        {
+          "label": "B",
+          "text": "伟大社会革命"
+        },
+        {
+          "label": "C",
+          "text": "伟大革命斗争"
+        },
+        {
+          "label": "D",
+          "text": "伟大事业发展"
+        }
+      ],
+      "answer": "AB",
+      "prompt": "中国共产党的不懈奋斗史，就是一部（ ）相互促进的历史。",
+      "id": "q0269"
+    },
+    {
+      "chapter": "第十七章 全面从严治党",
+      "chapterOrder": 17,
+      "number": 10,
+      "type": "multiple",
+      "options": [
+        {
+          "label": "A",
+          "text": "伟大斗争"
+        },
+        {
+          "label": "B",
+          "text": "伟大工程"
+        },
+        {
+          "label": "C",
+          "text": "伟大事业"
+        },
+        {
+          "label": "D",
+          "text": "伟大梦想"
+        }
+      ],
+      "answer": "ABCD",
+      "prompt": "以习近平同志为核心的党中央统揽（ ），以刀刃向内的自我革命精神深入推进全面从严治党，推动中国特色社会主义事业展现出更为广阔的发展前景,党在革命性锻造中更加坚强有力。",
+      "id": "q0270"
+    }
+  ]
+};
+
+</script>
+    <script>
+      const bank = window.QUESTION_BANK || { questions: [] };
+      const allQuestions = bank.questions || [];
+      const storageKey = "xigai-answerer-state-v1";
+      const state = loadState();
+      let activeType = "all";
+      let visibleQuestions = [];
+      let currentIndex = 0;
+      let selected = new Set();
+      let hasChecked = false;
+
+      const chapterSelect = document.getElementById("chapterSelect");
+      const modeSelect = document.getElementById("modeSelect");
+      const searchInput = document.getElementById("searchInput");
+      const typeTabs = document.getElementById("typeTabs");
+      const totalCount = document.getElementById("totalCount");
+      const activeCount = document.getElementById("activeCount");
+      const rateTop = document.getElementById("rateTop");
+      const progressBar = document.getElementById("progressBar");
+      const questionTags = document.getElementById("questionTags");
+      const prompt = document.getElementById("prompt");
+      const counter = document.getElementById("counter");
+      const options = document.getElementById("options");
+      const feedback = document.getElementById("feedback");
+      const emptyState = document.getElementById("emptyState");
+      const questionView = document.getElementById("questionView");
+      const prevBtn = document.getElementById("prevBtn");
+      const submitBtn = document.getElementById("submitBtn");
+      const nextBtn = document.getElementById("nextBtn");
+      const shuffleBtn = document.getElementById("shuffleBtn");
+      const resetBtn = document.getElementById("resetBtn");
+      const navGrid = document.getElementById("navGrid");
+      const answeredCount = document.getElementById("answeredCount");
+      const correctCount = document.getElementById("correctCount");
+      const wrongCount = document.getElementById("wrongCount");
+      const rateCount = document.getElementById("rateCount");
+
+      function loadState() {
+        try {
+          return JSON.parse(localStorage.getItem(storageKey)) || { answers: {}, order: [] };
+        } catch {
+          return { answers: {}, order: [] };
+        }
+      }
+
+      function saveState() {
+        localStorage.setItem(storageKey, JSON.stringify(state));
+      }
+
+      function typeName(type) {
+        return {
+          single: "单选",
+          multiple: "多选",
+          judge: "判断",
+        }[type] || "题目";
+      }
+
+      function displayLabel(label) {
+        if (label === "T") return "√";
+        if (label === "F") return "×";
+        return label;
+      }
+
+      function answerText(question, answer) {
+        return answer
+          .split("")
+          .map((label) => {
+            const option = question.options.find((item) => item.label === label);
+            return `${displayLabel(label)}.${option ? option.text : ""}`;
+          })
+          .join("；");
+      }
+
+      function sortedAnswer(values) {
+        return [...values].sort().join("");
+      }
+
+      function isCorrect(question, value) {
+        return sortedAnswer(value.split("")) === sortedAnswer(question.answer.split(""));
+      }
+
+      function initChapters() {
+        const chapters = [...new Map(allQuestions.map((q) => [q.chapter, q])).values()]
+          .sort((a, b) => a.chapterOrder - b.chapterOrder || a.chapter.localeCompare(b.chapter, "zh-CN"));
+        const total = allQuestions.length;
+        chapterSelect.innerHTML = `<option value="all">全部章节（${total}）</option>`;
+        for (const chapter of chapters) {
+          const count = allQuestions.filter((q) => q.chapter === chapter.chapter).length;
+          const option = document.createElement("option");
+          option.value = chapter.chapter;
+          option.textContent = `${chapter.chapter}（${count}）`;
+          chapterSelect.appendChild(option);
+        }
+      }
+
+      function applyFilters(keepCurrent = false) {
+        const previousId = visibleQuestions[currentIndex]?.id;
+        const chapter = chapterSelect.value;
+        const mode = modeSelect.value;
+        const keyword = searchInput.value.trim().toLowerCase();
+        visibleQuestions = allQuestions.filter((question) => {
+          const record = state.answers[question.id];
+          const inChapter = chapter === "all" || question.chapter === chapter;
+          const inType = activeType === "all" || question.type === activeType;
+          const inMode =
+            mode === "all" ||
+            (mode === "wrong" && record?.checked && !record.correct) ||
+            (mode === "unanswered" && !record?.checked);
+          const content =
+            `${question.prompt} ${question.options.map((option) => option.text).join(" ")}`.toLowerCase();
+          return inChapter && inType && inMode && (!keyword || content.includes(keyword));
+        });
+
+        const orderMap = new Map((state.order || []).map((id, index) => [id, index]));
+        visibleQuestions.sort((a, b) => {
+          const orderA = orderMap.has(a.id) ? orderMap.get(a.id) : Number.MAX_SAFE_INTEGER;
+          const orderB = orderMap.has(b.id) ? orderMap.get(b.id) : Number.MAX_SAFE_INTEGER;
+          if (orderA !== orderB) return orderA - orderB;
+          return allQuestions.indexOf(a) - allQuestions.indexOf(b);
+        });
+
+        if (keepCurrent && previousId) {
+          currentIndex = Math.max(0, visibleQuestions.findIndex((question) => question.id === previousId));
+        } else {
+          currentIndex = Math.min(currentIndex, Math.max(visibleQuestions.length - 1, 0));
+        }
+        selected = new Set();
+        hasChecked = false;
+        render();
+      }
+
+      function shuffleVisible() {
+        const ids = visibleQuestions.map((question) => question.id);
+        for (let index = ids.length - 1; index > 0; index -= 1) {
+          const swapIndex = Math.floor(Math.random() * (index + 1));
+          [ids[index], ids[swapIndex]] = [ids[swapIndex], ids[index]];
+        }
+        const others = allQuestions.map((question) => question.id).filter((id) => !ids.includes(id));
+        state.order = [...ids, ...others];
+        currentIndex = 0;
+        saveState();
+        applyFilters();
+      }
+
+      function resetProgress() {
+        if (!confirm("清空当前答题记录？")) return;
+        state.answers = {};
+        state.order = [];
+        saveState();
+        selected = new Set();
+        hasChecked = false;
+        applyFilters();
+      }
+
+      function render() {
+        totalCount.textContent = allQuestions.length;
+        activeCount.textContent = visibleQuestions.length;
+        renderStats();
+        renderNavigator();
+
+        const isEmpty = visibleQuestions.length === 0;
+        emptyState.classList.toggle("show", isEmpty);
+        questionView.classList.toggle("hidden", isEmpty);
+        options.classList.toggle("hidden", isEmpty);
+        feedback.classList.toggle("hidden", isEmpty);
+        prevBtn.disabled = isEmpty;
+        submitBtn.disabled = isEmpty;
+        nextBtn.disabled = isEmpty;
+        progressBar.style.width = isEmpty ? "0%" : `${((currentIndex + 1) / visibleQuestions.length) * 100}%`;
+        if (isEmpty) return;
+
+        const question = visibleQuestions[currentIndex];
+        const record = state.answers[question.id];
+        selected = new Set(record?.selected || []);
+        hasChecked = Boolean(record?.checked);
+
+        questionTags.innerHTML = "";
+        const typeTag = document.createElement("span");
+        typeTag.className = "tag";
+        typeTag.textContent = typeName(question.type);
+        const chapterTag = document.createElement("span");
+        chapterTag.className = "tag alt";
+        chapterTag.textContent = question.chapter;
+        questionTags.append(typeTag, chapterTag);
+        prompt.textContent = question.prompt;
+        counter.textContent = `${currentIndex + 1} / ${visibleQuestions.length}`;
+
+        options.innerHTML = "";
+        for (const option of question.options) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "option";
+          button.dataset.label = option.label;
+          button.innerHTML = `
+            <span class="option-key">${displayLabel(option.label)}</span>
+            <span class="option-text"></span>
+          `;
+          button.querySelector(".option-text").textContent = option.text;
+          button.addEventListener("click", () => chooseOption(option.label));
+          options.appendChild(button);
+        }
+
+        feedback.className = "feedback";
+        feedback.innerHTML = "";
+        paintOptionState(question, record);
+        submitBtn.textContent = hasChecked ? "再判一次" : "判题";
+      }
+
+      function chooseOption(label) {
+        const question = visibleQuestions[currentIndex];
+        if (question.type === "multiple") {
+          selected.has(label) ? selected.delete(label) : selected.add(label);
+        } else {
+          selected = new Set([label]);
+        }
+        hasChecked = false;
+        paintOptionState(question);
+      }
+
+      function paintOptionState(question, record = null) {
+        const checked = record?.checked || hasChecked;
+        const picked = record?.selected ? new Set(record.selected) : selected;
+        for (const button of options.querySelectorAll(".option")) {
+          const label = button.dataset.label;
+          button.className = "option";
+          if (picked.has(label)) button.classList.add("selected");
+          if (checked && question.answer.includes(label)) button.classList.add("correct");
+          if (checked && picked.has(label) && !question.answer.includes(label)) button.classList.add("wrong");
+        }
+
+        if (checked && record) {
+          feedback.classList.add("show", record.correct ? "good" : "bad");
+          feedback.innerHTML = record.correct
+            ? `<strong class="good">答对了。</strong> 正确答案：${answerText(question, question.answer)}`
+            : `<strong class="bad">答错了。</strong> 正确答案：${answerText(question, question.answer)}；你的答案：${record.selected.length ? answerText(question, record.selected.join("")) : "未选择"}`;
+        }
+      }
+
+      function submitAnswer() {
+        const question = visibleQuestions[currentIndex];
+        if (!question) return;
+        const value = sortedAnswer(selected);
+        const correct = value ? isCorrect(question, value) : false;
+        state.answers[question.id] = {
+          selected: value.split(""),
+          checked: true,
+          correct,
+          time: Date.now(),
+        };
+        saveState();
+        hasChecked = true;
+        render();
+      }
+
+      function move(delta) {
+        if (!visibleQuestions.length) return;
+        currentIndex = Math.min(Math.max(currentIndex + delta, 0), visibleQuestions.length - 1);
+        selected = new Set();
+        hasChecked = false;
+        render();
+      }
+
+      function renderStats() {
+        const records = Object.values(state.answers || {}).filter((record) => record.checked);
+        const answered = records.length;
+        const correct = records.filter((record) => record.correct).length;
+        const wrong = records.filter((record) => !record.correct).length;
+        const rate = answered ? `${Math.round((correct / answered) * 100)}%` : "0%";
+        answeredCount.textContent = answered;
+        correctCount.textContent = correct;
+        wrongCount.textContent = wrong;
+        rateCount.textContent = rate;
+        rateTop.textContent = rate;
+      }
+
+      function renderNavigator() {
+        navGrid.innerHTML = "";
+        visibleQuestions.forEach((question, index) => {
+          const button = document.createElement("button");
+          const record = state.answers[question.id];
+          button.type = "button";
+          button.className = "nav-dot";
+          button.textContent = index + 1;
+          if (index === currentIndex) button.classList.add("current");
+          if (record?.checked && record.correct) button.classList.add("done");
+          if (record?.checked && !record.correct) button.classList.add("missed");
+          button.addEventListener("click", () => {
+            currentIndex = index;
+            selected = new Set();
+            hasChecked = false;
+            render();
+          });
+          navGrid.appendChild(button);
+        });
+      }
+
+      chapterSelect.addEventListener("change", () => applyFilters());
+      modeSelect.addEventListener("change", () => applyFilters());
+      searchInput.addEventListener("input", () => applyFilters(true));
+      shuffleBtn.addEventListener("click", shuffleVisible);
+      resetBtn.addEventListener("click", resetProgress);
+      prevBtn.addEventListener("click", () => move(-1));
+      nextBtn.addEventListener("click", () => move(1));
+      submitBtn.addEventListener("click", submitAnswer);
+      typeTabs.addEventListener("click", (event) => {
+        const button = event.target.closest("button[data-type]");
+        if (!button) return;
+        activeType = button.dataset.type;
+        for (const tab of typeTabs.querySelectorAll("button")) {
+          tab.classList.toggle("active", tab === button);
+        }
+        applyFilters();
+      });
+
+      initChapters();
+      applyFilters();
+    </script>
+  </body>
+</html>
